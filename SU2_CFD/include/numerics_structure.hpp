@@ -71,11 +71,11 @@ protected:
   su2double Prandtl_Lam;        /*!< \brief Laminar Prandtl's number. */
   su2double Prandtl_Turb;    /*!< \brief Turbulent Prandtl's number. */
   
-public:
-  
+public:  
   su2double
   **Flux_Tensor,  /*!< \brief Flux tensor (used for viscous and inviscid purposes. */
-  *Proj_Flux_Tensor;    /*!< \brief Flux tensor projected in a direction. */
+  *Proj_Flux_Tensor,    /*!< \brief Flux tensor projected in a direction. */
+  **dPdC;   /*!< \brief dPdC tensor (used for numerical jacobian computation purposes). */
   
   su2double
   **tau,    /*!< \brief Viscous stress tensor. */
@@ -889,7 +889,56 @@ public:
   void GetPrimitive2Conservative (su2double *val_Mean_PrimVar,
                                   su2double *val_Mean_SecVar,
                                   su2double **val_Jac_PC);
-  
+
+  /*!
+   * \overload
+   * \brief Mapping between primitives variables P and conservatives variables C.
+   * \param[in] V_i - Value of the primitive variables.
+   */
+  void SetPrimitive2Conservative (su2double *V_i);
+
+  /*!
+   * \brief Computate the numerical jacobian of the convective terms.
+   * \param[out] val_Jacobian_i - Pointer to the numerical Jacobian of the numerical method at node i.
+   * \param[out] val_Jacobian_j - Pointer to the numerical Jacobian of the numerical method at node j.
+   * \param[in] val_residual - Pointer to the total residual.
+   * \param[in] V_i - State at node i.
+   * \param[in] V_j - State at node j.
+   * \param[in] config - Definition of the particular problem.
+   */
+  void ComputeJacobian(su2double **val_Jacobian_i, su2double **val_Jacobian_j,
+                       su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config);
+
+  /*!
+   * \overload
+   * \brief Computate the numerical jacobian of the source terms.
+   * \param[out] val_Jacobian_i - Pointer to the numerical Jacobian of the numerical method at node i.
+   * \param[in] val_residual - Pointer to the total residual.
+   * \param[in] U_i - State at node i (conservative variables).
+   * \param[in] config - Definition of the particular problem.
+   */
+  void ComputeJacobian(su2double **val_Jacobian_i, su2double *val_residual, su2double *U_i, CConfig *config);
+
+  /*!
+   * \brief Delegation of the computation of the residual in the convective terms between two nodes i and j.
+   *        Perturbation can also be 0, in which case the residual is computed.
+   * \param[out] val_residual - Pointer to the total residual.
+   * \param[in] V_i - Perturbed state at node i.
+   * \param[in] V_j - Perturbed state at node j.
+   * \param[in] config - Definition of the particular problem.
+   */
+  virtual void ComputeResidualAuxiliar(su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config);
+
+  /*!
+   * \overload
+   * \brief Delegation of the computation of the residual in the source terms.
+   *        Perturbation can also be 0, in which case the residual is computed.
+   * \param[out] val_residual - Pointer to the total residual.
+   * \param[in] U_i - Perturbed state at node i (conservative variables).
+   * \param[in] config - Definition of the particular problem.
+   */
+  virtual void ComputeResidualAuxiliar(su2double *val_residual, su2double *U_i, CConfig *config);
+
   /*!
    * \overload
    * \brief Computation of the matrix P for a generic fluid model
@@ -2675,6 +2724,15 @@ public:
    */
   void ComputeResidual(su2double *val_residual, su2double **val_Jacobian_i, su2double **val_Jacobian_j,
                        CConfig *config);
+  
+  /*!
+   * \brief Delegation of the computation of the residual using a JST method.
+   * \param[out] val_residual - Pointer to the total residual.
+   * \param[in] V_i - Perturbed state at node i.
+   * \param[in] V_j - Perturbed state at node j.
+   * \param[in] config - Definition of the particular problem.
+   */
+  void ComputeResidualAuxiliar(su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config);
 };
 
 /*!
@@ -2728,6 +2786,15 @@ public:
    */
   void ComputeResidual(su2double *val_residual, su2double **val_Jacobian_i, su2double **val_Jacobian_j,
                        CConfig *config);
+  
+  /*!
+   * \brief Delegation of the computation of the residual using a JST method.
+   * \param[out] val_residual - Pointer to the total residual.
+   * \param[in] V_i - Perturbed state at node i.
+   * \param[in] V_j - Perturbed state at node j.
+   * \param[in] config - Definition of the particular problem.
+   */
+  void ComputeResidualAuxiliar(su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config);
 };
 
 /*!

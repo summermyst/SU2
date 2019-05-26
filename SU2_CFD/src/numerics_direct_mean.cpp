@@ -74,8 +74,6 @@ CCentJST_Flow::~CCentJST_Flow(void) {
 void CCentJST_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jacobian_i, su2double **val_Jacobian_j,
                                     CConfig *config) {
   
-  su2double U_i[5] = {0.0,0.0,0.0,0.0,0.0}, U_j[5] = {0.0,0.0,0.0,0.0,0.0};
-
   AD::StartPreacc();
   AD::SetPreaccIn(Normal, nDim);
   AD::SetPreaccIn(V_i, nDim+5); AD::SetPreaccIn(V_j, nDim+5);
@@ -85,6 +83,75 @@ void CCentJST_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jac
   if (grid_movement) {
     AD::SetPreaccIn(GridVel_i, nDim); AD::SetPreaccIn(GridVel_j, nDim);
   }
+
+  /*-- Residual computation --*/
+  ComputeResidualAuxiliar(val_residual, V_i, V_j, config);
+
+  /*--- Jacobian computation ---*/
+  if (implicit) {
+
+    /*-- Numerical Jacobian computation --*/
+    if (config->GetNumJacConvective()) {
+      ComputeJacobian(val_Jacobian_i, val_Jacobian_j, val_residual, V_i, V_j, config);
+    }
+
+    /*-- Analytical Jacobian computation --*/
+    else {
+
+      /*--- Jacobians of the inviscid flux, scale = 0.5 because val_residual ~ 0.5*(fc_i+fc_j)*Normal ---*/
+
+      GetInviscidProjJac(MeanVelocity, &MeanEnergy, Normal, 0.5, val_Jacobian_i);
+      for (iVar = 0; iVar < nVar; iVar++)
+        for (jVar = 0; jVar < nVar; jVar++)
+          val_Jacobian_j[iVar][jVar] = val_Jacobian_i[iVar][jVar];
+      
+      /*--- Adjustment due to grid motion ---*/
+
+      if (grid_movement) {
+        ProjVelocity = 0.0;
+        for (iDim = 0; iDim < nDim; iDim++)
+          ProjVelocity += 0.5*(GridVel_i[iDim]+GridVel_j[iDim])*Normal[iDim];
+        for (iVar = 0; iVar < nVar; iVar++) {
+          val_Jacobian_i[iVar][iVar] -= 0.5*ProjVelocity;
+          val_Jacobian_j[iVar][iVar] -= 0.5*ProjVelocity;
+        }
+      }
+
+      /*--- Jacobian computation ---*/
+
+      cte_0 = (Epsilon_2 + Epsilon_4*su2double(Neighbor_i+1))*StretchingFactor*MeanLambda;
+      cte_1 = (Epsilon_2 + Epsilon_4*su2double(Neighbor_j+1))*StretchingFactor*MeanLambda;
+      
+      for (iVar = 0; iVar < (nVar-1); iVar++) {
+        val_Jacobian_i[iVar][iVar] += cte_0;
+        val_Jacobian_j[iVar][iVar] -= cte_1;
+      }
+      
+      /*--- Last row of Jacobian_i ---*/
+      
+      val_Jacobian_i[nVar-1][0] += cte_0*Gamma_Minus_One*sq_vel_i;
+      for (iDim = 0; iDim < nDim; iDim++)
+        val_Jacobian_i[nVar-1][iDim+1] -= cte_0*Gamma_Minus_One*Velocity_i[iDim];
+      val_Jacobian_i[nVar-1][nVar-1] += cte_0*Gamma;
+      
+      /*--- Last row of Jacobian_j ---*/
+      
+      val_Jacobian_j[nVar-1][0] -= cte_1*Gamma_Minus_One*sq_vel_j;
+      for (iDim = 0; iDim < nDim; iDim++)
+        val_Jacobian_j[nVar-1][iDim+1] += cte_1*Gamma_Minus_One*Velocity_j[iDim];
+      val_Jacobian_j[nVar-1][nVar-1] -= cte_1*Gamma;
+
+    }
+    
+  }
+
+  AD::SetPreaccOut(val_residual, nVar);
+  AD::EndPreacc();
+}
+
+void CCentJST_Flow::ComputeResidualAuxiliar(su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config) {
+
+  su2double U_i[5] = {0.0,0.0,0.0,0.0,0.0}, U_j[5] = {0.0,0.0,0.0,0.0,0.0};
 
   /*--- Pressure, density, enthalpy, energy, and velocity at points i and j ---*/
   
@@ -127,15 +194,6 @@ void CCentJST_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jac
 
   for (iVar = 0; iVar < nVar; iVar++)
     val_residual[iVar] = ProjFlux[iVar];
-  
-  /*--- Jacobians of the inviscid flux, scale = 0.5 because val_residual ~ 0.5*(fc_i+fc_j)*Normal ---*/
-
-  if (implicit) {
-    GetInviscidProjJac(MeanVelocity, &MeanEnergy, Normal, 0.5, val_Jacobian_i);
-    for (iVar = 0; iVar < nVar; iVar++)
-      for (jVar = 0; jVar < nVar; jVar++)
-        val_Jacobian_j[iVar][jVar] = val_Jacobian_i[iVar][jVar];
-  }
 
   /*--- Adjustment due to grid motion ---*/
   
@@ -143,13 +201,8 @@ void CCentJST_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jac
     ProjVelocity = 0.0;
     for (iDim = 0; iDim < nDim; iDim++)
       ProjVelocity += 0.5*(GridVel_i[iDim]+GridVel_j[iDim])*Normal[iDim];
-    for (iVar = 0; iVar < nVar; iVar++) {
+    for (iVar = 0; iVar < nVar; iVar++)
       val_residual[iVar] -= ProjVelocity * 0.5*(U_i[iVar] + U_j[iVar]);
-      if (implicit) {
-        val_Jacobian_i[iVar][iVar] -= 0.5*ProjVelocity;
-        val_Jacobian_j[iVar][iVar] -= 0.5*ProjVelocity;
-      }
-    }
   }
   
   /*--- Computes differences btw. Laplacians and conservative variables,
@@ -199,37 +252,6 @@ void CCentJST_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jac
   
   for (iVar = 0; iVar < nVar; iVar++)
     val_residual[iVar] += (Epsilon_2*Diff_U[iVar] - Epsilon_4*Diff_Lapl[iVar])*StretchingFactor*MeanLambda;
-  
-  /*--- Jacobian computation ---*/
-
-  if (implicit) {
-
-    cte_0 = (Epsilon_2 + Epsilon_4*su2double(Neighbor_i+1))*StretchingFactor*MeanLambda;
-    cte_1 = (Epsilon_2 + Epsilon_4*su2double(Neighbor_j+1))*StretchingFactor*MeanLambda;
-    
-    for (iVar = 0; iVar < (nVar-1); iVar++) {
-      val_Jacobian_i[iVar][iVar] += cte_0;
-      val_Jacobian_j[iVar][iVar] -= cte_1;
-    }
-    
-    /*--- Last row of Jacobian_i ---*/
-    
-    val_Jacobian_i[nVar-1][0] += cte_0*Gamma_Minus_One*sq_vel_i;
-    for (iDim = 0; iDim < nDim; iDim++)
-      val_Jacobian_i[nVar-1][iDim+1] -= cte_0*Gamma_Minus_One*Velocity_i[iDim];
-    val_Jacobian_i[nVar-1][nVar-1] += cte_0*Gamma;
-    
-    /*--- Last row of Jacobian_j ---*/
-    
-    val_Jacobian_j[nVar-1][0] -= cte_1*Gamma_Minus_One*sq_vel_j;
-    for (iDim = 0; iDim < nDim; iDim++)
-      val_Jacobian_j[nVar-1][iDim+1] += cte_1*Gamma_Minus_One*Velocity_j[iDim];
-    val_Jacobian_j[nVar-1][nVar-1] -= cte_1*Gamma;
-    
-  }
-
-  AD::SetPreaccOut(val_residual, nVar);
-  AD::EndPreacc();
 }
 
 CCentJST_KE_Flow::CCentJST_KE_Flow(unsigned short val_nDim, unsigned short val_nVar, CConfig *config) : CNumerics(val_nDim, val_nVar, config) {
@@ -268,14 +290,79 @@ CCentJST_KE_Flow::~CCentJST_KE_Flow(void) {
 void CCentJST_KE_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jacobian_i, su2double **val_Jacobian_j,
                                     CConfig *config) {
 
-  su2double U_i[5] = {0.0,0.0,0.0,0.0,0.0}, U_j[5] = {0.0,0.0,0.0,0.0,0.0};
-
   AD::StartPreacc();
   AD::SetPreaccIn(Normal, nDim);
   AD::SetPreaccIn(V_i, nDim+5); AD::SetPreaccIn(V_j, nDim+5);
   AD::SetPreaccIn(Sensor_i);    AD::SetPreaccIn(Sensor_j);
   AD::SetPreaccIn(Lambda_i);    AD::SetPreaccIn(Lambda_j);
   AD::SetPreaccIn(Und_Lapl_i, nVar); AD::SetPreaccIn(Und_Lapl_j, nVar);
+
+  /*-- Residual computation --*/
+  ComputeResidualAuxiliar(val_residual, V_i, V_j, config);
+
+  /*--- Jacobian computation ---*/
+  if (implicit) {
+
+    /*-- Numerical Jacobian computation --*/
+    if (config->GetNumJacConvective()) {
+      ComputeJacobian(val_Jacobian_i, val_Jacobian_j, val_residual, V_i, V_j, config);
+    }
+
+    /*-- Analytical Jacobian computation --*/
+    else {
+
+      /*--- Jacobians of the inviscid flux, scale = 0.5 because val_residual ~ 0.5*(fc_i+fc_j)*Normal ---*/
+      
+      GetInviscidProjJac(MeanVelocity, &MeanEnergy, Normal, 0.5, val_Jacobian_i);
+      for (iVar = 0; iVar < nVar; iVar++)
+        for (jVar = 0; jVar < nVar; jVar++)
+          val_Jacobian_j[iVar][jVar] = val_Jacobian_i[iVar][jVar];
+      
+      /*--- Adjustment due to grid motion ---*/
+
+      if (grid_movement) {
+        ProjVelocity = 0.0;
+        for (iDim = 0; iDim < nDim; iDim++)
+          ProjVelocity += 0.5*(GridVel_i[iDim]+GridVel_j[iDim])*Normal[iDim];
+        for (iVar = 0; iVar < nVar; iVar++) {
+          val_Jacobian_i[iVar][iVar] -= 0.5*ProjVelocity;
+          val_Jacobian_j[iVar][iVar] -= 0.5*ProjVelocity;
+          }
+      }
+      
+      cte_0 = Epsilon_2*StretchingFactor*MeanLambda;
+
+      for (iVar = 0; iVar < (nVar-1); iVar++) {
+        val_Jacobian_i[iVar][iVar] += cte_0;
+        val_Jacobian_j[iVar][iVar] -= cte_0;
+      }
+
+      /*--- Last row of Jacobian_i ---*/
+
+      val_Jacobian_i[nVar-1][0] += cte_0*Gamma_Minus_One*sq_vel_i;
+      for (iDim = 0; iDim < nDim; iDim++)
+        val_Jacobian_i[nVar-1][iDim+1] -= cte_0*Gamma_Minus_One*Velocity_i[iDim];
+      val_Jacobian_i[nVar-1][nVar-1] += cte_0*Gamma;
+
+      /*--- Last row of Jacobian_j ---*/
+
+      val_Jacobian_j[nVar-1][0] -= cte_1*Gamma_Minus_One*sq_vel_j;
+      for (iDim = 0; iDim < nDim; iDim++)
+        val_Jacobian_j[nVar-1][iDim+1] += cte_1*Gamma_Minus_One*Velocity_j[iDim];
+      val_Jacobian_j[nVar-1][nVar-1] -= cte_1*Gamma;
+    
+    }
+
+  }
+
+  AD::SetPreaccOut(val_residual, nVar);
+  AD::EndPreacc();
+
+}
+
+void CCentJST_KE_Flow::ComputeResidualAuxiliar(su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config) {
+  
+  su2double U_i[5] = {0.0,0.0,0.0,0.0,0.0}, U_j[5] = {0.0,0.0,0.0,0.0,0.0};
 
   /*--- Pressure, density, enthalpy, energy, and velocity at points i and j ---*/
 
@@ -319,28 +406,14 @@ void CCentJST_KE_Flow::ComputeResidual(su2double *val_residual, su2double **val_
   for (iVar = 0; iVar < nVar; iVar++)
     val_residual[iVar] = ProjFlux[iVar];
 
-  /*--- Jacobians of the inviscid flux, scale = 0.5 because val_residual ~ 0.5*(fc_i+fc_j)*Normal ---*/
-
-  if (implicit) {
-    GetInviscidProjJac(MeanVelocity, &MeanEnergy, Normal, 0.5, val_Jacobian_i);
-    for (iVar = 0; iVar < nVar; iVar++)
-      for (jVar = 0; jVar < nVar; jVar++)
-        val_Jacobian_j[iVar][jVar] = val_Jacobian_i[iVar][jVar];
-  }
-
   /*--- Adjustment due to grid motion ---*/
 
   if (grid_movement) {
     ProjVelocity = 0.0;
     for (iDim = 0; iDim < nDim; iDim++)
       ProjVelocity += 0.5*(GridVel_i[iDim]+GridVel_j[iDim])*Normal[iDim];
-    for (iVar = 0; iVar < nVar; iVar++) {
+    for (iVar = 0; iVar < nVar; iVar++)
       val_residual[iVar] -= ProjVelocity * 0.5*(U_i[iVar]+U_j[iVar]);
-      if (implicit) {
-        val_Jacobian_i[iVar][iVar] -= 0.5*ProjVelocity;
-        val_Jacobian_j[iVar][iVar] -= 0.5*ProjVelocity;
-      }
-    }
   }
 
   /*--- Computes differences btw. Laplacians and conservative variables,
@@ -388,39 +461,7 @@ void CCentJST_KE_Flow::ComputeResidual(su2double *val_residual, su2double **val_
 
   for (iVar = 0; iVar < nVar; iVar++)
       val_residual[iVar] += Epsilon_2*(Diff_U[iVar])*StretchingFactor*MeanLambda;
-
-  /*--- Jacobian computation ---*/
-
-  if (implicit) {
-
-    cte_0 = Epsilon_2*StretchingFactor*MeanLambda;
-
-    for (iVar = 0; iVar < (nVar-1); iVar++) {
-      val_Jacobian_i[iVar][iVar] += cte_0;
-      val_Jacobian_j[iVar][iVar] -= cte_0;
-    }
-
-    /*--- Last row of Jacobian_i ---*/
-
-    val_Jacobian_i[nVar-1][0] += cte_0*Gamma_Minus_One*sq_vel_i;
-    for (iDim = 0; iDim < nDim; iDim++)
-      val_Jacobian_i[nVar-1][iDim+1] -= cte_0*Gamma_Minus_One*Velocity_i[iDim];
-    val_Jacobian_i[nVar-1][nVar-1] += cte_0*Gamma;
-
-    /*--- Last row of Jacobian_j ---*/
-
-    val_Jacobian_j[nVar-1][0] -= cte_1*Gamma_Minus_One*sq_vel_j;
-    for (iDim = 0; iDim < nDim; iDim++)
-      val_Jacobian_j[nVar-1][iDim+1] += cte_1*Gamma_Minus_One*Velocity_j[iDim];
-    val_Jacobian_j[nVar-1][nVar-1] -= cte_1*Gamma;
-
-  }
-
-  AD::SetPreaccOut(val_residual, nVar);
-  AD::EndPreacc();
-
 }
-
 
 CCentLax_Flow::CCentLax_Flow(unsigned short val_nDim, unsigned short val_nVar, CConfig *config) : CNumerics(val_nDim, val_nVar, config) {
   

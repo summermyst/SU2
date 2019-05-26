@@ -158,6 +158,10 @@ inline void CFEAElasticity::Compute_Lame_Parameters(void) {
   Kappa  = Lambda + (2/3)*Mu;
 }
 
+inline void CNumerics::ComputeResidualAuxiliar(su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config) { }
+
+inline void CNumerics::ComputeResidualAuxiliar(su2double *val_residual, su2double *U_i, CConfig *config) { }
+
 inline void CNumerics::ComputeResidual(su2double *val_residual, CConfig *config) { }
 
 inline void CNumerics::ComputeResidual(su2double *val_residual_i, su2double *val_residual_j) { }
