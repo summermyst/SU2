@@ -1592,6 +1592,15 @@ public:
    */
   void ComputeResidual(su2double *val_residual, su2double **val_Jacobian_i, su2double **val_Jacobian_j,
                        CConfig *config);
+
+  /*!
+   * \brief Delegation of the computation of the residual between two nodes i and j.
+   * \param[out] val_residual - Pointer to the total residual.
+   * \param[in] V_i - Perturbed state at node i.
+   * \param[in] V_j - Perturbed state at node j.
+   * \param[in] config - Definition of the particular problem.
+   */
+  void ComputeResidualAuxiliar(su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config);
 };
 
 /*!
@@ -2034,6 +2043,15 @@ public:
    * \param[in] config - Definition of the particular problem.
    */
   void ComputeResidual(su2double *val_residual, su2double **val_Jacobian_i, su2double **val_Jacobian_j, CConfig *config);
+
+  /*!
+   * \brief Delegation of the computation of the residual in Roe's flux between two nodes i and j.
+   * \param[out] val_residual - Pointer to the total residual.
+   * \param[in] V_i - Perturbed state at node i.
+   * \param[in] V_j - Perturbed state at node j.
+   * \param[in] config - Definition of the particular problem.
+   */
+  void ComputeResidualAuxiliar(su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config);
 };
 
 /*!
@@ -2177,6 +2195,15 @@ public:
    * \param[in] config - Definition of the particular problem.
    */
   void ComputeResidual(su2double *val_residual, su2double **val_Jacobian_i, su2double **val_Jacobian_j, CConfig *config);
+  
+  /*!
+   * \brief Delegation of the computation of the residual in Roe's flux between two nodes i and j.
+   * \param[out] val_residual - Pointer to the total residual.
+   * \param[in] V_i - Perturbed state at node i.
+   * \param[in] V_j - Perturbed state at node j.
+   * \param[in] config - Definition of the particular problem.
+   */
+  void ComputeResidualAuxiliar(su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config);
 };
 
 /*!
@@ -2224,6 +2251,15 @@ public:
    * \param[in] config - Definition of the particular problem.
    */
   void ComputeResidual(su2double *val_residual, su2double **val_Jacobian_i, su2double **val_Jacobian_j, CConfig *config);
+
+  /*!
+   * \brief Delegation of the computation of the residual in Roe's flux between two nodes i and j.
+   * \param[out] val_residual - Pointer to the total residual.
+   * \param[in] V_i - Perturbed state at node i.
+   * \param[in] V_j - Perturbed state at node j.
+   * \param[in] config - Definition of the particular problem.
+   */
+  void ComputeResidualAuxiliar(su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config);
 };
 
 /*!
@@ -2275,6 +2311,14 @@ public:
    */
   void ComputeResidual(su2double *val_residual, su2double **val_Jacobian_i, su2double **val_Jacobian_j, CConfig *config);
 
+  /*!
+   * \brief Delegation of the computation of the residual in Roe's flux between two nodes i and j.
+   * \param[out] val_residual - Pointer to the total residual.
+   * \param[in] V_i - Perturbed state at node i.
+   * \param[in] V_j - Perturbed state at node j.
+   * \param[in] config - Definition of the particular problem.
+   */
+  void ComputeResidualAuxiliar(su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config);
 };
 
 /*!
@@ -2328,6 +2372,15 @@ public:
    * \param[in] config - Definition of the particular problem.
    */
    void ComputeResidual(su2double *val_residual, su2double **val_Jacobian_i, su2double **val_Jacobian_j, CConfig *config);
+
+  /*!
+   * \brief Delegation of the computation of the residual in Roe's flux between two nodes i and j.
+   * \param[out] val_residual - Pointer to the total residual.
+   * \param[in] V_i - Perturbed state at node i.
+   * \param[in] V_j - Perturbed state at node j.
+   * \param[in] config - Definition of the particular problem.
+   */
+  void ComputeResidualAuxiliar(su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config);
 
    /*!
    * \brief Compute the Average quantities for a general fluid flux between two nodes i and j.
@@ -2997,6 +3050,15 @@ public:
    */
   void ComputeResidual(su2double *val_residual, su2double **val_Jacobian_i, su2double **val_Jacobian_j,
                        CConfig *config);
+  
+  /*!
+   * \brief Delegation of the computation of the flow residual using a Lax method.
+   * \param[out] val_residual - Pointer to the total residual.
+   * \param[in] V_i - Perturbed state at node i.
+   * \param[in] V_j - Perturbed state at node j.
+   * \param[in] config - Definition of the particular problem.
+   */
+  void ComputeResidualAuxiliar(su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config);
 };
 
 /*!

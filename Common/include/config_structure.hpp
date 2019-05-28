@@ -70,6 +70,14 @@ using namespace std;
 
 class CConfig {
 private:
+  /*-- Advanced Programming for Scientific Computing, AA. 2018-2019, 8 cfu project --*/
+  /*-- Variables --*/
+  bool Num_Jac_Convective; /*!< \brief Numerical jacobian, convective terms. */
+  bool Num_Jac_Viscous;    /*!< \brief Numerical jacobian, viscous terms. */
+  bool Num_Jac_Source;     /*!< \brief Numerical jacobian, source terms. */
+  su2double Perturbation;  /*!< \brief Perturbation used in the computation of the numerical jacobian. */
+  su2double *User_Pert;    /*!< \brief User defined minimum perturbation for the numerical jacobian. */
+
   SU2_MPI::Comm SU2_Communicator; /*!< \brief MPI communicator of SU2.*/
   int rank, size;
   unsigned short Kind_SU2; /*!< \brief Kind of SU2 software component.*/
@@ -1008,6 +1016,7 @@ private:
   unsigned short Kind_RoeLowDiss;    /*!< \brief Kind of Roe scheme with low dissipation for unsteady flows. */
   bool QCR;                   /*!< \brief Spalart-Allmaras with Quadratic Constitutive Relation, 2000 version (SA-QCR2000) . */
   su2double *default_vel_inf, /*!< \brief Default freestream velocity array for the COption class. */
+  *default_user_pert,         /*!< \brief User specified perturbation array for primitive variables in numerical jacobian computation. */
   *default_eng_cyl,           /*!< \brief Default engine box array for the COption class. */
   *default_eng_val,           /*!< \brief Default engine box array values for the COption class. */
   *default_cfl_adapt,         /*!< \brief Default CFL adapt param array for the COption class. */
@@ -1468,7 +1477,37 @@ public:
    */
   bool TokenizeString(string & str, string & option_name,
                       vector<string> & option_value);
-  
+
+  /*!
+    * \brief Decide whether to compute the Convective Jacobian numerically.
+    * \return <code>TRUE</code> if the Convective Jacobian is to be computed numerically, <code>FALSE</code> otherwise.
+    */
+  bool GetNumJacConvective(void);
+
+  /*!
+    * \brief Decide whether to compute the Viscous Jacobian numerically.
+    * \return <code>TRUE</code> if the Viscous Jacobian is to be computed numerically, <code>FALSE</code> otherwise.
+    */
+  bool GetNumJacViscous(void);
+
+  /*!
+    * \brief Decide whether to compute the Source Jacobian numerically.
+    * \return <code>TRUE</code> if the Source Jacobian is to be computed numerically, <code>FALSE</code> otherwise.
+    */
+  bool GetNumJacSource(void);
+
+  /*!
+   * \brief Get the value specified for the perturbation in the computation of the numerical jacobian.
+   * \return Value of the perturbation.
+   */
+  su2double GetPerturbation(void);
+
+  /*!
+   * \brief Get the vector of user defined minimum perturbations for the computation of the numerical jacobian.
+   * \return Vector of the user defined perturbations.
+   */
+  su2double* GetUserMinPerturbation(void);
+
   /*!
    * \brief Get reference origin for moment computation.
    * \param[in] val_marker - the marker we are monitoring.

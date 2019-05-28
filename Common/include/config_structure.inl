@@ -291,6 +291,16 @@ inline unsigned short CConfig::GetRef_NonDim(void) { return Ref_NonDim; }
 
 inline unsigned short CConfig::GetRef_Inc_NonDim(void) { return Ref_Inc_NonDim; }
 
+inline bool CConfig::GetNumJacConvective(void) { return Num_Jac_Convective; }
+
+inline bool CConfig::GetNumJacViscous(void) { return Num_Jac_Viscous; }
+
+inline bool CConfig::GetNumJacSource(void) { return Num_Jac_Source; }
+
+inline su2double CConfig::GetPerturbation(void) { return Perturbation; }
+
+inline su2double* CConfig::GetUserMinPerturbation(void) { return User_Pert; }
+
 inline void CConfig::SetKind_SU2(unsigned short val_kind_su2) { Kind_SU2 = val_kind_su2 ; }
 
 inline bool CConfig::GetContinuous_Adjoint(void) { return ContinuousAdjoint; }

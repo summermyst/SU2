@@ -1952,7 +1952,7 @@ void CNumerics::ComputeJacobian(su2double **val_Jacobian_i, su2double **val_Jaco
         V_i_pert[jVar] = V_i[jVar];
       }
 
-      V_i_pert[iVar] = V_i[iVar] + perturbation * (0>V_i[iVar]?-1:1) * std::max(fabs(V_i[iVar]), user_pert[iVar]);
+      V_i_pert[iVar] = V_i[iVar] + perturbation * (0>V_i[iVar]?-1:1) * max(fabs(V_i[iVar]), user_pert[iVar]);
 
       su2double sq_vel_i = 0.0;
       for (iDim = 0; iDim < nDim; iDim++)
@@ -1972,7 +1972,7 @@ void CNumerics::ComputeJacobian(su2double **val_Jacobian_i, su2double **val_Jaco
       std::cout << "\n";
 #endif
 
-      std::fill(val_residual_perturbed, val_residual_perturbed + nVar, 0.0);
+      fill(val_residual_perturbed, val_residual_perturbed + nVar, 0.0);
       ComputeResidualAuxiliar(val_residual_perturbed, V_i_pert, V_j, config);
 
       for (jVar = 0; jVar < nVar; jVar++) {
@@ -1988,7 +1988,7 @@ void CNumerics::ComputeJacobian(su2double **val_Jacobian_i, su2double **val_Jaco
         V_j_pert[jVar] = V_j[jVar];
       }
 
-      V_j_pert[iVar] = V_j[iVar] + perturbation * (0>V_j[iVar]?-1:1) * std::max(fabs(V_j[iVar]), user_pert[iVar]);
+      V_j_pert[iVar] = V_j[iVar] + perturbation * (0>V_j[iVar]?-1:1) * max(fabs(V_j[iVar]), user_pert[iVar]);
 
       su2double sq_vel_j = 0.0;
       for (iDim = 0; iDim < nDim; iDim++)
@@ -2008,7 +2008,7 @@ void CNumerics::ComputeJacobian(su2double **val_Jacobian_i, su2double **val_Jaco
       std::cout << "\n";
 #endif
 
-      std::fill(val_residual_perturbed, val_residual_perturbed + nVar, 0.0);
+      fill(val_residual_perturbed, val_residual_perturbed + nVar, 0.0);
       ComputeResidualAuxiliar(val_residual_perturbed, V_i, V_j_pert, config);
 
       for (jVar = 0; jVar < nVar; jVar++) {
@@ -2027,7 +2027,8 @@ void CNumerics::ComputeJacobian(su2double **val_Jacobian_i, su2double **val_Jaco
   SetPrimitive2Conservative(V_i);
 
   for (iVar = 0; iVar < nVar; iVar++) {
-    su2double temp[nVar] = {0.0};
+    su2double temp[nVar];
+    fill(temp, temp + nVar, 0.0);
     for (jVar = 0; jVar < nVar; jVar++)
       for (kVar = 0; kVar < nVar; kVar++)
         temp[jVar] += val_Jacobian_i[iVar][kVar] * dPdC[kVar][jVar];
@@ -2038,7 +2039,8 @@ void CNumerics::ComputeJacobian(su2double **val_Jacobian_i, su2double **val_Jaco
   SetPrimitive2Conservative(V_j);
   
   for (iVar = 0; iVar < nVar; iVar++) {
-    su2double temp[nVar] = {0.0};
+    su2double temp[nVar];
+    fill(temp, temp + nVar, 0.0);
     for (jVar = 0; jVar < nVar; jVar++)
       for (kVar = 0; kVar < nVar; kVar++)
         temp[jVar] += val_Jacobian_j[iVar][kVar] * dPdC[kVar][jVar];

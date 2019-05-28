@@ -545,9 +545,10 @@ void CConfig::SetPointersNull(void) {
 
   /* Harmonic Balance Frequency pointer */
   Omega_HB = NULL;
-    
+
   /*--- Initialize some default arrays to NULL. ---*/
   
+  default_user_pert          = NULL;
   default_vel_inf            = NULL;
   default_ffd_axis           = NULL;
   default_eng_cyl            = NULL;
@@ -657,6 +658,7 @@ void CConfig::SetConfig_Options(unsigned short val_iZone, unsigned short val_nZo
 
   /*--- Allocate some default arrays needed for lists of doubles. ---*/
   
+  default_user_pert          = new su2double[5];
   default_vel_inf            = new su2double[3];
   default_ffd_axis           = new su2double[3];
   default_eng_cyl            = new su2double[7];
@@ -712,6 +714,21 @@ void CConfig::SetConfig_Options(unsigned short val_iZone, unsigned short val_nZo
 
   /*!\par CONFIG_CATEGORY: Problem Definition \ingroup Config */
   /*--- Options related to problem definition and partitioning ---*/
+
+  /*!\brief NUMERICAL_JACOBIAN_CONVECTIVE \n DESCRIPTION: Enable numerical computation of the jacobian of the convective terms. \ingroup Config*/
+  addBoolOption("NUMERICAL_JACOBIAN_CONVECTIVE", Num_Jac_Convective, true);
+  /*!\brief NUMERICAL_JACOBIAN_VISCOUS \n DESCRIPTION: Enable numerical computation of the jacobian of the viscous terms. \ingroup Config*/
+  addBoolOption("NUMERICAL_JACOBIAN_VISCOUS", Num_Jac_Viscous, false);
+  /*!\brief NUMERICAL_JACOBIAN_SOURCE \n DESCRIPTION: Enable numerical computation of the jacobian of the source terms. \ingroup Config*/
+  addBoolOption("NUMERICAL_JACOBIAN_SOURCE", Num_Jac_Source, false);
+
+  /*!\brief NUMERICAL_JACOBIAN_PERTURBATION \n DESCRIPTION: Perturbation value for the numerical computation of the jacobian (10^-7 by default) \ingroup Config*/
+  addDoubleOption("NUMERICAL_JACOBIAN_PERTURBATION", Perturbation, 1.0E-7);
+
+  /*!\brief USER_PERTURBATION \n DESCRIPTION: User defined perturbation for each primitive variable \ingroup Config*/
+  default_user_pert[0] = 1.0E-15; default_user_pert[1] = 1.0E-15; default_user_pert[2] =1.0E-15;
+  default_user_pert[3] = 1.0E-15; default_user_pert[4] = 1.0E-15;
+  addDoubleArrayOption("USER_PERTURBATION", 5, User_Pert, default_user_pert);
 
   /*!\brief REGIME_TYPE \n  DESCRIPTION: Regime type \n OPTIONS: see \link Regime_Map \endlink \ingroup Config*/
   addEnumOption("REGIME_TYPE", Kind_Regime, Regime_Map, COMPRESSIBLE);
@@ -7236,6 +7253,7 @@ CConfig::~CConfig(void) {
 
   /*--- Delete some arrays needed just for initializing options. ---*/
   
+  if (default_user_pert     != NULL) delete [] default_user_pert;
   if (default_vel_inf       != NULL) delete [] default_vel_inf;
   if (default_ffd_axis      != NULL) delete [] default_ffd_axis;
   if (default_eng_cyl       != NULL) delete [] default_eng_cyl;
