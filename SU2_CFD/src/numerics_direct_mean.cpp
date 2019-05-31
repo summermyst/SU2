@@ -37,6 +37,7 @@
 
 #include "../include/numerics_structure.hpp"
 #include <limits>
+#define DEBUG2 false
 
 CCentJST_Flow::CCentJST_Flow(unsigned short val_nDim, unsigned short val_nVar, CConfig *config) : CNumerics(val_nDim, val_nVar, config) {
   
@@ -556,7 +557,7 @@ void CCentLax_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jac
   }
   
   /* DEBUG: print values of the residual */
-  #if DEBUG
+  #if DEBUG2
   std::cout << "-------------------------------------------\nCentLax \n";
 
   std::cout << "-------------------------------------------\nresidual = \n";
@@ -793,7 +794,7 @@ void CUpwCUSP_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jac
   }
   
   /* DEBUG: print values of the residual */
-  #if DEBUG
+  #if DEBUG2
   std::cout << "-------------------------------------------\nUpwCUSP \n";
 
   std::cout << "-------------------------------------------\nresidual = \n";
@@ -1028,7 +1029,7 @@ void CUpwAUSM_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jac
   }
   
   /* DEBUG: print values of the residual */
-  #if DEBUG
+  #if DEBUG2
   std::cout << "-------------------------------------------\nUpwAUSM \n";
 
   std::cout << "-------------------------------------------\nresidual = \n";
@@ -1663,7 +1664,7 @@ void CUpwSLAU_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jac
   }
   
   /* DEBUG: print values of the residual */
-  #if DEBUG
+  #if DEBUG2
   std::cout << "-------------------------------------------\nUpwSLAU \n";
 
   std::cout << "-------------------------------------------\nresidual = \n";
@@ -1903,7 +1904,7 @@ void CUpwSLAU2_Flow::ComputeResidual(su2double *val_residual, su2double **val_Ja
   }
   
   /* DEBUG: print values of the residual */
-  #if DEBUG
+  #if DEBUG2
   std::cout << "-------------------------------------------\nUpwSLAU2 \n";
 
   std::cout << "-------------------------------------------\nresidual = \n";
@@ -2355,7 +2356,7 @@ void CUpwHLLC_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jac
   }
 
   /* DEBUG: print values of the residual */
-  #if DEBUG
+  #if DEBUG2
   std::cout << "-------------------------------------------\nUpwHLLC \n";
 
   std::cout << "-------------------------------------------\nresidual = \n";
@@ -3662,7 +3663,7 @@ void CUpwRoe_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jaco
   AD::EndPreacc();
   
   /* DEBUG: print values of the residual */
-  #if DEBUG
+  #if DEBUG2
   std::cout << "-------------------------------------------\nUpwRoe \n";
 
   std::cout << "-------------------------------------------\nresidual = \n";

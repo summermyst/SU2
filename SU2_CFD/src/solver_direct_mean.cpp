@@ -37,6 +37,7 @@
 
 #include "../include/solver_structure.hpp"
 #include "../../Common/include/toolboxes/printing_toolbox.hpp"
+#define DEBUG3 false
 
 CEulerSolver::CEulerSolver(void) : CSolver() {
   
@@ -4590,7 +4591,28 @@ void CEulerSolver::Centered_Residual(CGeometry *geometry, CSolver **solver_conta
     /*--- Compute residuals, and Jacobians ---*/
     
     numerics->ComputeResidual(Res_Conv, Jacobian_i, Jacobian_j, config);
-    
+
+    #if DEBUG3
+      if (iEdge == 1) {
+        /* print values of the jacobian */
+        std::cout << "jacobian dR/dU_i = \n";
+        for (unsigned short iVar = 0; iVar < nVar; iVar++) {
+          for (unsigned short jVar = 0; jVar < nVar; jVar++)
+            std::cout << Jacobian_i[iVar][jVar] << " ";
+          std::cout << "\n";
+        }
+        std::cout << "-------------------------------------------\n";
+
+        std::cout << "jacobian dR/dU_j = \n";
+        for (unsigned short iVar = 0; iVar < nVar; iVar++) {
+          for (unsigned short jVar = 0; jVar < nVar; jVar++)
+            std::cout << Jacobian_j[iVar][jVar] << " ";
+          std::cout << "\n";
+        }
+        std::cout << "===========================================\n";
+      }
+    #endif
+
     /*--- Update convective and artificial dissipation residuals ---*/
     
     LinSysRes.AddBlock(iPoint, Res_Conv);
@@ -4815,6 +4837,27 @@ void CEulerSolver::Upwind_Residual(CGeometry *geometry, CSolver **solver_contain
     /*--- Compute the residual ---*/
     
     numerics->ComputeResidual(Res_Conv, Jacobian_i, Jacobian_j, config);
+
+    #if DEBUG3
+      if (iEdge == 1) {
+        /* print values of the jacobian */
+        std::cout << "jacobian dR/dU_i = \n";
+        for (unsigned short iVar = 0; iVar < nVar; iVar++) {
+          for (unsigned short jVar = 0; jVar < nVar; jVar++)
+            std::cout << Jacobian_i[iVar][jVar] << " ";
+          std::cout << "\n";
+        }
+        std::cout << "-------------------------------------------\n";
+
+        std::cout << "jacobian dR/dU_j = \n";
+        for (unsigned short iVar = 0; iVar < nVar; iVar++) {
+          for (unsigned short jVar = 0; jVar < nVar; jVar++)
+            std::cout << Jacobian_j[iVar][jVar] << " ";
+          std::cout << "\n";
+        }
+        std::cout << "===========================================\n";
+      }
+    #endif
 
     /*--- Update residual value ---*/
     
