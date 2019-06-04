@@ -148,6 +148,8 @@ void CCentJST_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jac
 
   AD::SetPreaccOut(val_residual, nVar);
   AD::EndPreacc();
+
+  // ComputeResidualAuxiliar(val_residual, V_i, V_j, config);
 }
 
 void CCentJST_Flow::ComputeResidualAuxiliar(su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config) {
@@ -359,6 +361,7 @@ void CCentJST_KE_Flow::ComputeResidual(su2double *val_residual, su2double **val_
   AD::SetPreaccOut(val_residual, nVar);
   AD::EndPreacc();
 
+  // ComputeResidualAuxiliar(val_residual, V_i, V_j, config);
 }
 
 void CCentJST_KE_Flow::ComputeResidualAuxiliar(su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config) {
@@ -582,6 +585,8 @@ void CCentLax_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jac
   }
   std::cout << "-------------------------------------------\n";
   #endif
+
+  // ComputeResidualAuxiliar(val_residual, V_i, V_j, config);
 }
 
 void CCentLax_Flow::ComputeResidualAuxiliar(su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config) {
@@ -819,6 +824,8 @@ void CUpwCUSP_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jac
   }
   std::cout << "-------------------------------------------\n";
   #endif
+
+  // ComputeResidualAuxiliar(val_residual, V_i, V_j, config);
 }
 
 void CUpwCUSP_Flow::ComputeResidualAuxiliar(su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config) {
@@ -1054,6 +1061,8 @@ void CUpwAUSM_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jac
   }
   std::cout << "-------------------------------------------\n";
   #endif
+
+  // ComputeResidualAuxiliar(val_residual, V_i, V_j, config);
 }
 
 void CUpwAUSM_Flow::ComputeResidualAuxiliar(su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config) {
@@ -1689,6 +1698,8 @@ void CUpwSLAU_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jac
   }
   std::cout << "-------------------------------------------\n";
   #endif
+
+  // ComputeResidualAuxiliar(val_residual, V_i, V_j, config);
 }
 
 void CUpwSLAU_Flow::ComputeResidualAuxiliar(su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config) {
@@ -1929,6 +1940,8 @@ void CUpwSLAU2_Flow::ComputeResidual(su2double *val_residual, su2double **val_Ja
   }
   std::cout << "-------------------------------------------\n";
   #endif
+
+  // ComputeResidualAuxiliar(val_residual, V_i, V_j, config);
 }
 
 void CUpwSLAU2_Flow::ComputeResidualAuxiliar(su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config) {
@@ -2381,6 +2394,8 @@ void CUpwHLLC_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jac
   }
   std::cout << "-------------------------------------------\n";
   #endif
+
+  // ComputeResidualAuxiliar(val_residual, V_i, V_j, config);
 }
 
 void CUpwHLLC_Flow::ComputeResidualAuxiliar(su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config) {
@@ -2900,6 +2915,7 @@ void CUpwGeneralHLLC_Flow::ComputeResidual(su2double *val_residual, su2double **
 
   }
 
+  // ComputeResidualAuxiliar(val_residual, V_i, V_j, config);
 }
 
 void CUpwGeneralHLLC_Flow::ComputeResidualAuxiliar(su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config) {

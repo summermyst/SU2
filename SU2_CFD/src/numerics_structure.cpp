@@ -37,7 +37,11 @@
 
 #include "../include/numerics_structure.hpp"
 #include <iomanip> // for setprecision manipulator
+#define FORWARD false
+#define BACKWARD false
+#define CENTERED true
 #define DEBUG1 false
+#define RESOUND false
 
 CNumerics::CNumerics(void) {
 
@@ -1913,11 +1917,12 @@ void CNumerics::SetPrimitive2Conservative(su2double *V_i) {
 
 }
 
+#if FORWARD
 void CNumerics::ComputeJacobian(su2double **val_Jacobian_i, su2double **val_Jacobian_j,
                                 su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config) {
   AD_BEGIN_PASSIVE
 
-  unsigned short iVar, jVar, kVar, iDim;
+  unsigned short iVar, jVar, kVar, iDim, iCol;
   unsigned short nPrimVar = nDim + 9;
   su2double val_residual_perturbed[nVar];
   su2double V_i_pert[nPrimVar];
@@ -1939,7 +1944,7 @@ void CNumerics::ComputeJacobian(su2double **val_Jacobian_i, su2double **val_Jaco
 #endif
 
   /*--- Computation of dRdP ---*/
-  unsigned short iCol = 0;
+  iCol = 0;
   for (iVar = 0; iVar < nPrimVar && iCol < nVar; iVar++) {
 
     if (iVar != 0) {  // skip temperature perturbation
@@ -2035,6 +2040,7 @@ void CNumerics::ComputeJacobian(su2double **val_Jacobian_i, su2double **val_Jaco
 
   }
   
+  #if DEBUG1
   /* print values of dRdP */
   std::cout << "-------------------------------------------\ndRdP_i = \n";
   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
@@ -2043,9 +2049,11 @@ void CNumerics::ComputeJacobian(su2double **val_Jacobian_i, su2double **val_Jaco
     std::cout << "\n";
   }
   std::cout << "-------------------------------------------\n";
+  #endif
 
   SetPrimitive2Conservative(V_i);
 
+  #if DEBUG1
   /* print values of dPdC */
   std::cout << "-------------------------------------------\ndPdC_i = \n";
   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
@@ -2054,6 +2062,7 @@ void CNumerics::ComputeJacobian(su2double **val_Jacobian_i, su2double **val_Jaco
     std::cout << "\n";
   }
   std::cout << "-------------------------------------------\n";
+  #endif
 
   for (iVar = 0; iVar < nVar; iVar++) {
     su2double temp[nVar];
@@ -2065,6 +2074,7 @@ void CNumerics::ComputeJacobian(su2double **val_Jacobian_i, su2double **val_Jaco
       val_Jacobian_i[iVar][jVar] = temp[jVar];
   }
 
+  #if DEBUG1
   /* print values of dRdP */
   std::cout << "-------------------------------------------\ndRdP_j = \n";
   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
@@ -2073,9 +2083,11 @@ void CNumerics::ComputeJacobian(su2double **val_Jacobian_i, su2double **val_Jaco
     std::cout << "\n";
   }
   std::cout << "-------------------------------------------\n";
+  #endif
 
   SetPrimitive2Conservative(V_j);
   
+  #if DEBUG1
   /* print values of dPdC */
   std::cout << "-------------------------------------------\ndPdC_j = \n";
   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
@@ -2084,19 +2096,597 @@ void CNumerics::ComputeJacobian(su2double **val_Jacobian_i, su2double **val_Jaco
     std::cout << "\n";
   }
   std::cout << "-------------------------------------------\n";
+  #endif
 
-  // for (iVar = 0; iVar < nVar; iVar++) {
-  //   su2double temp[nVar];
-  //   fill(temp, temp + nVar, 0.0);
-  //   for (jVar = 0; jVar < nVar; jVar++)
-  //     for (kVar = 0; kVar < nVar; kVar++)
-  //       temp[jVar] += val_Jacobian_j[iVar][kVar] * dPdC[kVar][jVar];
-  //   for (jVar = 0; jVar < nVar; jVar++)
-  //     val_Jacobian_j[iVar][jVar] = temp[jVar];
-  // }
+  for (iVar = 0; iVar < nVar; iVar++) {
+    su2double temp[nVar];
+    fill(temp, temp + nVar, 0.0);
+    for (jVar = 0; jVar < nVar; jVar++)
+      for (kVar = 0; kVar < nVar; kVar++)
+        temp[jVar] += val_Jacobian_j[iVar][kVar] * dPdC[kVar][jVar];
+    for (jVar = 0; jVar < nVar; jVar++)
+      val_Jacobian_j[iVar][jVar] = temp[jVar];
+  }
   
   AD_END_PASSIVE
 }
+#endif
+
+#if BACKWARD
+void CNumerics::ComputeJacobian(su2double **val_Jacobian_i, su2double **val_Jacobian_j,
+                                su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config) {
+  AD_BEGIN_PASSIVE
+
+  unsigned short iVar, jVar, kVar, iDim, iCol;
+  unsigned short nPrimVar = nDim + 9;
+  su2double val_residual_perturbed[nVar];
+  su2double V_i_pert[nPrimVar];
+  su2double V_j_pert[nPrimVar];
+  su2double perturbation = config->GetPerturbation();
+  su2double *user_pert = config->GetUserMinPerturbation();
+
+#if DEBUG1
+  std::cout << "=========================\nPrinting ComputeJacobian:" << std::endl;
+  std::cout << std::setprecision(10) << "\n";
+  std::cout << "V_i = ";
+  for (iVar = 0; iVar < nPrimVar; iVar++)
+    std::cout << V_i[iVar] << ", ";
+  std::cout << "\n";
+  std::cout << "V_j = ";
+  for (iVar = 0; iVar < nPrimVar; iVar++)
+    std::cout << V_j[iVar] << ", ";
+  std::cout << "\n";
+#endif
+
+  /*--- Computation of dRdP ---*/
+  iCol = 0;
+  for (iVar = 0; iVar < nPrimVar && iCol < nVar; iVar++) {
+
+    if (iVar != 0) {  // skip temperature perturbation
+
+      /*--- Jacobian of the flux in the i-th node ---*/
+      for (jVar = 0; jVar < nPrimVar; jVar++) {
+        V_i_pert[jVar] = V_i[jVar];
+      }
+
+      V_i_pert[iVar] = V_i[iVar] - perturbation * V_i[iVar];//(0>V_i[iVar]?-1:1) * max(fabs(V_i[iVar]), user_pert[iVar]);
+
+      su2double sq_vel_i = 0.0;
+      for (iDim = 0; iDim < nDim; iDim++)
+          sq_vel_i += V_i_pert[iDim+1] * V_i_pert[iDim+1];
+
+      V_i_pert[0] = V_i_pert[nDim+1] / (V_i_pert[nDim+2] * Gas_Constant);
+      V_i_pert[nDim+3] = V_i_pert[nDim+1] * Gamma / (V_i_pert[nDim+2] * Gamma_Minus_One) + 0.5 * sq_vel_i;
+      su2double Energy_i = V_i_pert[nDim+3] - V_i_pert[nDim+1] / V_i_pert[nDim+2];
+      V_i_pert[nDim+4] = sqrt(fabs(Gamma*Gamma_Minus_One*(Energy_i-0.5*sq_vel_i)));
+
+#if DEBUG1
+      std::cout << "V_i_pert = ";
+      for (kVar = 0; kVar < nPrimVar; kVar++)
+        std::cout << V_i_pert[kVar] << ", ";
+      std::cout << "\n";
+      std::cout << "V_j = ";
+      for (kVar = 0; kVar < nPrimVar; kVar++)
+        std::cout << V_j[kVar] << ", ";
+      std::cout << "\n";
+#endif
+
+      fill(val_residual_perturbed, val_residual_perturbed + nVar, 0.0);
+      ComputeResidualAuxiliar(val_residual_perturbed, V_i_pert, V_j, config);
+
+      for (jVar = 0; jVar < nVar; jVar++) {
+#if DEBUG1
+        std::cout << "pert_res_i = " << val_residual_perturbed[jVar];
+        std::cout << " - res_i = " << val_residual[jVar] << "\n";
+#endif
+        val_Jacobian_i[jVar][iCol] = (val_residual[jVar] - val_residual_perturbed[jVar]) / (V_i_pert[iVar] - V_i[iVar]);
+      }
+
+      iCol++;
+    }
+
+  }
+
+  iCol = 0;
+  for (iVar = 0; iVar < nPrimVar && iCol < nVar; iVar++) {
+
+    if (iVar != 0) {  // skip temperature perturbation
+
+      /*--- Jacobian of the flux in the j-th node ---*/
+      for (jVar = 0; jVar < nPrimVar; jVar++) {
+        V_j_pert[jVar] = V_j[jVar];
+      }
+
+      V_j_pert[iVar] = V_j[iVar] - perturbation * V_j[iVar];//(0>V_j[iVar]?-1:1) * max(fabs(V_j[iVar]), user_pert[iVar]);
+
+      su2double sq_vel_j = 0.0;
+      for (iDim = 0; iDim < nDim; iDim++)
+          sq_vel_j += V_j_pert[iDim+1] * V_j_pert[iDim+1];
+
+      V_j_pert[0] = V_j_pert[nDim+1] / (V_j_pert[nDim+2] * Gas_Constant);
+      V_j_pert[nDim+3] = V_j_pert[nDim+1] * Gamma / (V_j_pert[nDim+2] * Gamma_Minus_One) + 0.5 * sq_vel_j;
+      su2double Energy_j = V_j_pert[nDim+3] - V_j_pert[nDim+1] / V_j_pert[nDim+2];
+      V_j_pert[nDim+4] = sqrt(fabs(Gamma*Gamma_Minus_One*(Energy_j-0.5*sq_vel_j)));
+
+#if DEBUG1
+      std::cout << "V_i = ";
+      for (kVar = 0; kVar < nPrimVar; kVar++)
+        std::cout << V_i[kVar] << ", ";
+      std::cout << "\n";
+      std::cout << "V_j_pert = ";
+      for (kVar = 0; kVar < nPrimVar; kVar++)
+        std::cout << V_j_pert[kVar] << ", ";
+      std::cout << "\n";
+#endif
+
+      fill(val_residual_perturbed, val_residual_perturbed + nVar, 0.0);
+      ComputeResidualAuxiliar(val_residual_perturbed, V_i, V_j_pert, config);
+
+      for (jVar = 0; jVar < nVar; jVar++) {
+#if DEBUG1
+        std::cout << "pert_res_j = " << val_residual_perturbed[jVar];
+        std::cout << " - res_j = " << val_residual[jVar] << "\n";
+#endif
+        val_Jacobian_j[jVar][iCol] = (val_residual[jVar] - val_residual_perturbed[jVar]) / (V_j_pert[iVar] - V_j[iVar]);
+      }
+
+      iCol++;
+    }
+
+  }
+  
+  #if DEBUG1
+  /* print values of dRdP */
+  std::cout << "-------------------------------------------\ndRdP_i = \n";
+  for (unsigned short iVar = 0; iVar < nVar; iVar++) {
+    for (unsigned short jVar = 0; jVar < nVar; jVar++)
+      std::cout << val_Jacobian_i[iVar][jVar] << " ";
+    std::cout << "\n";
+  }
+  std::cout << "-------------------------------------------\n";
+  #endif
+
+  SetPrimitive2Conservative(V_i);
+
+  #if DEBUG1
+  /* print values of dPdC */
+  std::cout << "-------------------------------------------\ndPdC_i = \n";
+  for (unsigned short iVar = 0; iVar < nVar; iVar++) {
+    for (unsigned short jVar = 0; jVar < nVar; jVar++)
+      std::cout << dPdC[iVar][jVar] << " ";
+    std::cout << "\n";
+  }
+  std::cout << "-------------------------------------------\n";
+  #endif
+
+  for (iVar = 0; iVar < nVar; iVar++) {
+    su2double temp[nVar];
+    fill(temp, temp + nVar, 0.0);
+    for (jVar = 0; jVar < nVar; jVar++)
+      for (kVar = 0; kVar < nVar; kVar++)
+        temp[jVar] += val_Jacobian_i[iVar][kVar] * dPdC[kVar][jVar];
+    for (jVar = 0; jVar < nVar; jVar++)
+      val_Jacobian_i[iVar][jVar] = temp[jVar];
+  }
+
+  #if DEBUG1
+  /* print values of dRdP */
+  std::cout << "-------------------------------------------\ndRdP_j = \n";
+  for (unsigned short iVar = 0; iVar < nVar; iVar++) {
+    for (unsigned short jVar = 0; jVar < nVar; jVar++)
+      std::cout << val_Jacobian_j[iVar][jVar] << " ";
+    std::cout << "\n";
+  }
+  std::cout << "-------------------------------------------\n";
+  #endif
+
+  SetPrimitive2Conservative(V_j);
+  
+  #if DEBUG1
+  /* print values of dPdC */
+  std::cout << "-------------------------------------------\ndPdC_j = \n";
+  for (unsigned short iVar = 0; iVar < nVar; iVar++) {
+    for (unsigned short jVar = 0; jVar < nVar; jVar++)
+      std::cout << dPdC[iVar][jVar] << " ";
+    std::cout << "\n";
+  }
+  std::cout << "-------------------------------------------\n";
+  #endif
+
+  for (iVar = 0; iVar < nVar; iVar++) {
+    su2double temp[nVar];
+    fill(temp, temp + nVar, 0.0);
+    for (jVar = 0; jVar < nVar; jVar++)
+      for (kVar = 0; kVar < nVar; kVar++)
+        temp[jVar] += val_Jacobian_j[iVar][kVar] * dPdC[kVar][jVar];
+    for (jVar = 0; jVar < nVar; jVar++)
+      val_Jacobian_j[iVar][jVar] = temp[jVar];
+  }
+  
+  AD_END_PASSIVE
+}
+#endif
+
+// #if CENTERED
+// void CNumerics::ComputeJacobian(su2double **val_Jacobian_i, su2double **val_Jacobian_j,
+//                                 su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config) {
+//   AD_BEGIN_PASSIVE
+
+//   unsigned short iVar, jVar, kVar, iDim, iCol;
+//   unsigned short nPrimVar = nDim + 9;
+//   su2double val_residual_perturbed_R[nVar];
+//   su2double val_residual_perturbed_L[nVar];
+//   su2double V_i_pert[nPrimVar];
+//   su2double V_j_pert[nPrimVar];
+//   su2double perturbation = config->GetPerturbation();
+//   su2double *user_pert = config->GetUserMinPerturbation();
+
+// #if DEBUG1
+//   std::cout << "=========================\nPrinting ComputeJacobian:" << std::endl;
+//   std::cout << std::setprecision(10) << "\n";
+//   std::cout << "V_i = ";
+//   for (iVar = 0; iVar < nPrimVar; iVar++)
+//     std::cout << V_i[iVar] << ", ";
+//   std::cout << "\n";
+//   std::cout << "V_j = ";
+//   for (iVar = 0; iVar < nPrimVar; iVar++)
+//     std::cout << V_j[iVar] << ", ";
+//   std::cout << "\n";
+// #endif
+
+//   /*--- Computation of dRdP ---*/
+//   iCol = 0;
+//   for (iVar = 0; iVar < nPrimVar && iCol < nVar; iVar++) {
+
+//     if (iVar != 0) {  // skip temperature perturbation
+
+//       /*--- Jacobian of the flux in the i-th node ---*/
+//       for (jVar = 0; jVar < nPrimVar; jVar++) {
+//         V_i_pert[jVar] = V_i[jVar];
+//       }
+
+//       V_i_pert[iVar] = V_i[iVar] + perturbation * V_i[iVar];//(0>V_i[iVar]?-1:1) * max(fabs(V_i[iVar]), user_pert[iVar]);
+//       su2double sq_vel_i = 0.0;
+//       for (iDim = 0; iDim < nDim; iDim++)
+//           sq_vel_i += V_i_pert[iDim+1] * V_i_pert[iDim+1];
+//       V_i_pert[0] = V_i_pert[nDim+1] / (V_i_pert[nDim+2] * Gas_Constant);
+//       V_i_pert[nDim+3] = V_i_pert[nDim+1] * Gamma / (V_i_pert[nDim+2] * Gamma_Minus_One) + 0.5 * sq_vel_i;
+// #if RESOUND
+//       // su2double Energy_i = V_i_pert[nDim+3] - V_i_pert[nDim+1] / V_i_pert[nDim+2];
+//       // V_i_pert[nDim+4] = sqrt(fabs(Gamma*Gamma_Minus_One*(Energy_i-0.5*sq_vel_i)));
+// #endif
+//       fill(val_residual_perturbed_R, val_residual_perturbed_R + nVar, 0.0);
+//       ComputeResidualAuxiliar(val_residual_perturbed_R, V_i_pert, V_j, config);
+
+//       V_i_pert[iVar] = V_i[iVar] - perturbation * V_i[iVar];//(0>V_i[iVar]?-1:1) * max(fabs(V_i[iVar]), user_pert[iVar]);
+//       sq_vel_i = 0.0;
+//       for (iDim = 0; iDim < nDim; iDim++)
+//           sq_vel_i += V_i_pert[iDim+1] * V_i_pert[iDim+1];
+//       V_i_pert[0] = V_i_pert[nDim+1] / (V_i_pert[nDim+2] * Gas_Constant);
+//       V_i_pert[nDim+3] = V_i_pert[nDim+1] * Gamma / (V_i_pert[nDim+2] * Gamma_Minus_One) + 0.5 * sq_vel_i;
+// #if RESOUND
+//       // Energy_i = V_i_pert[nDim+3] - V_i_pert[nDim+1] / V_i_pert[nDim+2];
+//       // V_i_pert[nDim+4] = sqrt(fabs(Gamma*Gamma_Minus_One*(Energy_i-0.5*sq_vel_i)));
+// #endif
+//       fill(val_residual_perturbed_L, val_residual_perturbed_L + nVar, 0.0);
+//       ComputeResidualAuxiliar(val_residual_perturbed_L, V_i_pert, V_j, config);
+
+//       for (jVar = 0; jVar < nVar; jVar++) {
+// #if DEBUG1
+//         std::cout << "pert_res_i = " << val_residual_perturbed[jVar];
+//         std::cout << " - res_i = " << val_residual[jVar] << "\n";
+// #endif
+//         val_Jacobian_i[jVar][iCol] = 0.5 * (val_residual_perturbed_R[jVar] - val_residual_perturbed_L[jVar]) / fabs(V_i_pert[iVar] - V_i[iVar]);
+//       }
+
+//       iCol++;
+//     }
+
+//   }
+
+//   iCol = 0;
+//   for (iVar = 0; iVar < nPrimVar && iCol < nVar; iVar++) {
+
+//     if (iVar != 0) {  // skip temperature perturbation
+
+//       /*--- Jacobian of the flux in the j-th node ---*/
+//       for (jVar = 0; jVar < nPrimVar; jVar++) {
+//         V_j_pert[jVar] = V_j[jVar];
+//       }
+
+//       V_j_pert[iVar] = V_j[iVar] + perturbation * V_j[iVar];//(0>V_j[iVar]?-1:1) * max(fabs(V_j[iVar]), user_pert[iVar]);
+//       su2double sq_vel_j = 0.0;
+//       for (iDim = 0; iDim < nDim; iDim++)
+//           sq_vel_j += V_j_pert[iDim+1] * V_j_pert[iDim+1];
+//       V_j_pert[0] = V_j_pert[nDim+1] / (V_j_pert[nDim+2] * Gas_Constant);
+//       V_j_pert[nDim+3] = V_j_pert[nDim+1] * Gamma / (V_j_pert[nDim+2] * Gamma_Minus_One) + 0.5 * sq_vel_j;
+// #if RESOUND
+//       // su2double Energy_j = V_j_pert[nDim+3] - V_j_pert[nDim+1] / V_j_pert[nDim+2];
+//       // V_j_pert[nDim+4] = sqrt(fabs(Gamma*Gamma_Minus_One*(Energy_j-0.5*sq_vel_j)));
+// #endif
+//       fill(val_residual_perturbed_R, val_residual_perturbed_R + nVar, 0.0);
+//       ComputeResidualAuxiliar(val_residual_perturbed_R, V_i, V_j_pert, config);
+
+//       V_j_pert[iVar] = V_j[iVar] - perturbation * V_j[iVar];//(0>V_j[iVar]?-1:1) * max(fabs(V_j[iVar]), user_pert[iVar]);
+//       sq_vel_j = 0.0;
+//       for (iDim = 0; iDim < nDim; iDim++)
+//           sq_vel_j += V_j_pert[iDim+1] * V_j_pert[iDim+1];
+//       V_j_pert[0] = V_j_pert[nDim+1] / (V_j_pert[nDim+2] * Gas_Constant);
+//       V_j_pert[nDim+3] = V_j_pert[nDim+1] * Gamma / (V_j_pert[nDim+2] * Gamma_Minus_One) + 0.5 * sq_vel_j;
+// #if RESOUND
+//       // Energy_j = V_j_pert[nDim+3] - V_j_pert[nDim+1] / V_j_pert[nDim+2];
+//       // V_j_pert[nDim+4] = sqrt(fabs(Gamma*Gamma_Minus_One*(Energy_j-0.5*sq_vel_j)));
+// #endif
+//       fill(val_residual_perturbed_L, val_residual_perturbed_L + nVar, 0.0);
+//       ComputeResidualAuxiliar(val_residual_perturbed_L, V_i, V_j_pert, config);
+
+//       for (jVar = 0; jVar < nVar; jVar++) {
+// #if DEBUG1
+//         std::cout << "pert_res_j = " << val_residual_perturbed[jVar];
+//         std::cout << " - res_j = " << val_residual[jVar] << "\n";
+// #endif
+//         val_Jacobian_j[jVar][iCol] = 0.5 * (val_residual_perturbed_R[jVar] - val_residual_perturbed_L[jVar]) / fabs(V_j_pert[iVar] - V_j[iVar]);
+//       }
+
+//       iCol++;
+//     }
+
+//   }
+  
+//   #if DEBUG1
+//   /* print values of dRdP */
+//   std::cout << "-------------------------------------------\ndRdP_i = \n";
+//   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
+//     for (unsigned short jVar = 0; jVar < nVar; jVar++)
+//       std::cout << val_Jacobian_i[iVar][jVar] << " ";
+//     std::cout << "\n";
+//   }
+//   std::cout << "-------------------------------------------\n";
+//   #endif
+
+//   SetPrimitive2Conservative(V_i);
+
+//   #if DEBUG1
+//   /* print values of dPdC */
+//   std::cout << "-------------------------------------------\ndPdC_i = \n";
+//   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
+//     for (unsigned short jVar = 0; jVar < nVar; jVar++)
+//       std::cout << dPdC[iVar][jVar] << " ";
+//     std::cout << "\n";
+//   }
+//   std::cout << "-------------------------------------------\n";
+//   #endif
+
+//   for (iVar = 0; iVar < nVar; iVar++) {
+//     su2double temp[nVar];
+//     fill(temp, temp + nVar, 0.0);
+//     for (jVar = 0; jVar < nVar; jVar++)
+//       for (kVar = 0; kVar < nVar; kVar++)
+//         temp[jVar] += val_Jacobian_i[iVar][kVar] * dPdC[kVar][jVar];
+//     for (jVar = 0; jVar < nVar; jVar++)
+//       val_Jacobian_i[iVar][jVar] = temp[jVar];
+//   }
+
+//   #if DEBUG1
+//   /* print values of dRdP */
+//   std::cout << "-------------------------------------------\ndRdP_j = \n";
+//   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
+//     for (unsigned short jVar = 0; jVar < nVar; jVar++)
+//       std::cout << val_Jacobian_j[iVar][jVar] << " ";
+//     std::cout << "\n";
+//   }
+//   std::cout << "-------------------------------------------\n";
+//   #endif
+
+//   SetPrimitive2Conservative(V_j);
+  
+//   #if DEBUG1
+//   /* print values of dPdC */
+//   std::cout << "-------------------------------------------\ndPdC_j = \n";
+//   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
+//     for (unsigned short jVar = 0; jVar < nVar; jVar++)
+//       std::cout << dPdC[iVar][jVar] << " ";
+//     std::cout << "\n";
+//   }
+//   std::cout << "-------------------------------------------\n";
+//   #endif
+
+//   for (iVar = 0; iVar < nVar; iVar++) {
+//     su2double temp[nVar];
+//     fill(temp, temp + nVar, 0.0);
+//     for (jVar = 0; jVar < nVar; jVar++)
+//       for (kVar = 0; kVar < nVar; kVar++)
+//         temp[jVar] += val_Jacobian_j[iVar][kVar] * dPdC[kVar][jVar];
+//     for (jVar = 0; jVar < nVar; jVar++)
+//       val_Jacobian_j[iVar][jVar] = temp[jVar];
+//   }
+  
+//   AD_END_PASSIVE
+// }
+// #endif
+
+#if CENTERED
+void CNumerics::ComputeJacobian(su2double **val_Jacobian_i, su2double **val_Jacobian_j,
+                                su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config) {
+  AD_BEGIN_PASSIVE
+
+  unsigned short iVar, jVar, kVar, iDim, iCol;
+  unsigned short nPrimVar = nDim + 9;
+  su2double val_residual_perturbed_R_i[nVar];
+  su2double val_residual_perturbed_L_i[nVar];
+  su2double val_residual_perturbed_R_j[nVar];
+  su2double val_residual_perturbed_L_j[nVar];
+  su2double V_i_pert[nPrimVar];
+  su2double V_j_pert[nPrimVar];
+  su2double perturbation = config->GetPerturbation();
+  su2double *user_pert = config->GetUserMinPerturbation();
+
+#if DEBUG1
+  std::cout << "=========================\nPrinting ComputeJacobian:" << std::endl;
+  std::cout << std::setprecision(10) << "\n";
+  std::cout << "V_i = ";
+  for (iVar = 0; iVar < nPrimVar; iVar++)
+    std::cout << V_i[iVar] << ", ";
+  std::cout << "\n";
+  std::cout << "V_j = ";
+  for (iVar = 0; iVar < nPrimVar; iVar++)
+    std::cout << V_j[iVar] << ", ";
+  std::cout << "\n";
+#endif
+
+  /*--- Computation of dRdP ---*/
+  iCol = 0;
+  for (iVar = 0; iVar < nPrimVar && iCol < nVar; iVar++) {
+
+    if (iVar != 0) {  // skip temperature perturbation
+
+      /*--- Jacobian of the flux in the i-th node ---*/
+      for (jVar = 0; jVar < nPrimVar; jVar++) {
+        V_i_pert[jVar] = V_i[jVar];
+        V_j_pert[jVar] = V_j[jVar];
+      }
+
+      V_i_pert[iVar] = V_i[iVar] + perturbation * (0>V_i[iVar]?-1:1) * max(fabs(V_i[iVar]), user_pert[iVar]);
+      su2double sq_vel_i = 0.0;
+      for (iDim = 0; iDim < nDim; iDim++)
+          sq_vel_i += V_i_pert[iDim+1] * V_i_pert[iDim+1];
+      V_i_pert[0] = V_i_pert[nDim+1] / (V_i_pert[nDim+2] * Gas_Constant);
+      V_i_pert[nDim+3] = V_i_pert[nDim+1] * Gamma / (V_i_pert[nDim+2] * Gamma_Minus_One) + 0.5 * sq_vel_i;
+#if RESOUND
+      // su2double Energy_i = V_i_pert[nDim+3] - V_i_pert[nDim+1] / V_i_pert[nDim+2];
+      // V_i_pert[nDim+4] = sqrt(fabs(Gamma*Gamma_Minus_One*(Energy_i-0.5*sq_vel_i)));
+#endif
+      fill(val_residual_perturbed_R_i, val_residual_perturbed_R_i + nVar, 0.0);
+      ComputeResidualAuxiliar(val_residual_perturbed_R_i, V_i_pert, V_j, config);
+
+      V_i_pert[iVar] = V_i[iVar] - perturbation * (0>V_i[iVar]?-1:1) * max(fabs(V_i[iVar]), user_pert[iVar]);
+      sq_vel_i = 0.0;
+      for (iDim = 0; iDim < nDim; iDim++)
+          sq_vel_i += V_i_pert[iDim+1] * V_i_pert[iDim+1];
+      V_i_pert[0] = V_i_pert[nDim+1] / (V_i_pert[nDim+2] * Gas_Constant);
+      V_i_pert[nDim+3] = V_i_pert[nDim+1] * Gamma / (V_i_pert[nDim+2] * Gamma_Minus_One) + 0.5 * sq_vel_i;
+#if RESOUND
+      // Energy_i = V_i_pert[nDim+3] - V_i_pert[nDim+1] / V_i_pert[nDim+2];
+      // V_i_pert[nDim+4] = sqrt(fabs(Gamma*Gamma_Minus_One*(Energy_i-0.5*sq_vel_i)));
+#endif
+      fill(val_residual_perturbed_L_i, val_residual_perturbed_L_i + nVar, 0.0);
+      ComputeResidualAuxiliar(val_residual_perturbed_L_i, V_i_pert, V_j, config);
+
+      V_j_pert[iVar] = V_j[iVar] + perturbation * (0>V_j[iVar]?-1:1) * max(fabs(V_j[iVar]), user_pert[iVar]);
+      su2double sq_vel_j = 0.0;
+      for (iDim = 0; iDim < nDim; iDim++)
+          sq_vel_j += V_j_pert[iDim+1] * V_j_pert[iDim+1];
+      V_j_pert[0] = V_j_pert[nDim+1] / (V_j_pert[nDim+2] * Gas_Constant);
+      V_j_pert[nDim+3] = V_j_pert[nDim+1] * Gamma / (V_j_pert[nDim+2] * Gamma_Minus_One) + 0.5 * sq_vel_j;
+#if RESOUND
+      // su2double Energy_j = V_j_pert[nDim+3] - V_j_pert[nDim+1] / V_j_pert[nDim+2];
+      // V_j_pert[nDim+4] = sqrt(fabs(Gamma*Gamma_Minus_One*(Energy_j-0.5*sq_vel_j)));
+#endif
+      fill(val_residual_perturbed_R_j, val_residual_perturbed_R_j + nVar, 0.0);
+      ComputeResidualAuxiliar(val_residual_perturbed_R_j, V_i, V_j_pert, config);
+
+      V_j_pert[iVar] = V_j[iVar] - perturbation * (0>V_j[iVar]?-1:1) * max(fabs(V_j[iVar]), user_pert[iVar]);
+      sq_vel_j = 0.0;
+      for (iDim = 0; iDim < nDim; iDim++)
+          sq_vel_j += V_j_pert[iDim+1] * V_j_pert[iDim+1];
+      V_j_pert[0] = V_j_pert[nDim+1] / (V_j_pert[nDim+2] * Gas_Constant);
+      V_j_pert[nDim+3] = V_j_pert[nDim+1] * Gamma / (V_j_pert[nDim+2] * Gamma_Minus_One) + 0.5 * sq_vel_j;
+#if RESOUND
+      // Energy_j = V_j_pert[nDim+3] - V_j_pert[nDim+1] / V_j_pert[nDim+2];
+      // V_j_pert[nDim+4] = sqrt(fabs(Gamma*Gamma_Minus_One*(Energy_j-0.5*sq_vel_j)));
+#endif
+      fill(val_residual_perturbed_L_j, val_residual_perturbed_L_j + nVar, 0.0);
+      ComputeResidualAuxiliar(val_residual_perturbed_L_j, V_i, V_j_pert, config);
+
+      for (jVar = 0; jVar < nVar; jVar++) {
+#if DEBUG1
+        std::cout << "pert_res_L_i = " << val_residual_perturbed_L_i[jVar] << "\n";
+        std::cout << "res_i = " << val_residual[jVar] << "\n";
+        std::cout << "pert_res_R_i = " << val_residual_perturbed_R_i[jVar] << "\n";
+        std::cout << "pert_res_L_j = " << val_residual_perturbed_L_j[jVar] << "\n";
+        std::cout << "res_j = " << val_residual[jVar] << "\n";
+        std::cout << "pert_res_R_j = " << val_residual_perturbed_R_j[jVar] << "\n";
+#endif
+        val_Jacobian_i[jVar][iCol] = 0.5 * (val_residual_perturbed_R_i[jVar] - val_residual_perturbed_L_i[jVar]) / fabs(V_i_pert[iVar] - V_i[iVar]);
+        val_Jacobian_j[jVar][iCol] = 0.5 * (val_residual_perturbed_R_j[jVar] - val_residual_perturbed_L_j[jVar]) / fabs(V_j_pert[iVar] - V_j[iVar]);
+      }
+
+      iCol++;
+    }
+
+  }
+
+  #if DEBUG1
+  /* print values of dRdP */
+  std::cout << "-------------------------------------------\ndRdP_i = \n";
+  for (unsigned short iVar = 0; iVar < nVar; iVar++) {
+    for (unsigned short jVar = 0; jVar < nVar; jVar++)
+      std::cout << val_Jacobian_i[iVar][jVar] << " ";
+    std::cout << "\n";
+  }
+  std::cout << "-------------------------------------------\n";
+  #endif
+
+  SetPrimitive2Conservative(V_i);
+
+  #if DEBUG1
+  /* print values of dPdC */
+  std::cout << "-------------------------------------------\ndPdC_i = \n";
+  for (unsigned short iVar = 0; iVar < nVar; iVar++) {
+    for (unsigned short jVar = 0; jVar < nVar; jVar++)
+      std::cout << dPdC[iVar][jVar] << " ";
+    std::cout << "\n";
+  }
+  std::cout << "-------------------------------------------\n";
+  #endif
+
+  for (iVar = 0; iVar < nVar; iVar++) {
+    su2double temp[nVar];
+    fill(temp, temp + nVar, 0.0);
+    for (jVar = 0; jVar < nVar; jVar++)
+      for (kVar = 0; kVar < nVar; kVar++)
+        temp[jVar] += val_Jacobian_i[iVar][kVar] * dPdC[kVar][jVar];
+    for (jVar = 0; jVar < nVar; jVar++)
+      val_Jacobian_i[iVar][jVar] = temp[jVar];
+  }
+
+  #if DEBUG1
+  /* print values of dRdP */
+  std::cout << "-------------------------------------------\ndRdP_j = \n";
+  for (unsigned short iVar = 0; iVar < nVar; iVar++) {
+    for (unsigned short jVar = 0; jVar < nVar; jVar++)
+      std::cout << val_Jacobian_j[iVar][jVar] << " ";
+    std::cout << "\n";
+  }
+  std::cout << "-------------------------------------------\n";
+  #endif
+
+  SetPrimitive2Conservative(V_j);
+  
+  #if DEBUG1
+  /* print values of dPdC */
+  std::cout << "-------------------------------------------\ndPdC_j = \n";
+  for (unsigned short iVar = 0; iVar < nVar; iVar++) {
+    for (unsigned short jVar = 0; jVar < nVar; jVar++)
+      std::cout << dPdC[iVar][jVar] << " ";
+    std::cout << "\n";
+  }
+  std::cout << "-------------------------------------------\n";
+  #endif
+
+  for (iVar = 0; iVar < nVar; iVar++) {
+    su2double temp[nVar];
+    fill(temp, temp + nVar, 0.0);
+    for (jVar = 0; jVar < nVar; jVar++)
+      for (kVar = 0; kVar < nVar; kVar++)
+        temp[jVar] += val_Jacobian_j[iVar][kVar] * dPdC[kVar][jVar];
+    for (jVar = 0; jVar < nVar; jVar++)
+      val_Jacobian_j[iVar][jVar] = temp[jVar];
+  }
+  
+  AD_END_PASSIVE
+}
+#endif
 
 void CNumerics::ComputeJacobian(su2double **val_Jacobian_i, su2double *val_residual, su2double *U_i, CConfig *config) {}
 
