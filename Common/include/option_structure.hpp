@@ -750,7 +750,8 @@ enum ENUM_UPWIND {
   FDS = 14,                   /*!< \brief Flux difference splitting upwind method (incompressible flows). */
   LAX_FRIEDRICH = 15,         /*!< \brief Lax-Friedrich numerical method. */
   AUSMPLUSUP = 16,            /*!< \brief AUSM+ -up numerical method (All Speed) */
-  AUSMPLUSUP2 = 17            /*!< \brief AUSM+ -up2 numerical method (All Speed) */
+  AUSMPLUSUP2 = 17,           /*!< \brief AUSM+ -up2 numerical method (All Speed) */
+  ROENUM = 18                 /*!< \brief Roe's upwind numerical method - Numerical jacobian */
 };
 static const map<string, ENUM_UPWIND> Upwind_Map = CCreateMap<string, ENUM_UPWIND>
 ("NONE", NO_UPWIND)
@@ -770,7 +771,8 @@ static const map<string, ENUM_UPWIND> Upwind_Map = CCreateMap<string, ENUM_UPWIN
 ("LMROE", LMROE)
 ("SLAU2", SLAU2)
 ("FDS", FDS)
-("LAX-FRIEDRICH", LAX_FRIEDRICH);
+("LAX-FRIEDRICH", LAX_FRIEDRICH)
+("ROENUM", ROENUM);
 
 /*!
  * \brief types of FEM spatial discretizations

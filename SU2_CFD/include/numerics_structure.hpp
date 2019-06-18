@@ -920,6 +920,15 @@ public:
   void ComputeJacobian(su2double **val_Jacobian_i, su2double *val_residual, su2double *U_i, CConfig *config);
 
   /*!
+   * \overload
+   * \brief Computate a quadratic form residual from primitive variables. Used for testing purposes only.
+   * \param[out] val_residual - Pointer to the total residual.
+   * \param[in] V_i - State at node i.
+   * \param[in] config - Definition of the particular problem.
+   */
+  void ComputeResidualAuxiliarTest(su2double *val_residual, su2double *V_i, CConfig *config);
+
+  /*!
    * \brief Delegation of the computation of the residual in the convective terms between two nodes i and j.
    *        Perturbation can also be 0, in which case the residual is computed.
    * \param[out] val_residual - Pointer to the total residual.
@@ -1649,6 +1658,59 @@ public:
   
 };
 
+/*!
+ * \class CUpwRoe_Flow
+ * \brief Class for solving an approximate Riemann solver of Roe for the flow equations in a numerical way.
+ * \ingroup ConvDiscr
+ * \author A. Bueno, F. Palacios, Jose` V.
+ */
+class CUpwRoe_Flow_Num : public CNumerics {
+private:
+  bool implicit, grid_movement, roe_low_dissipation;
+  su2double *Diff_U;
+  su2double *Velocity_i, *Velocity_j, *RoeVelocity;
+  su2double *ProjFlux_i, *ProjFlux_j;
+  su2double *delta_wave, *delta_vel;
+  su2double *Lambda, *Epsilon, MaxLambda, Delta;
+  su2double **P_Tensor, **invP_Tensor;
+  su2double sq_vel, Proj_ModJac_Tensor_ij, Density_i, Energy_i, SoundSpeed_i, Pressure_i, Enthalpy_i,
+  Density_j, Energy_j, SoundSpeed_j, Pressure_j, Enthalpy_j, R, RoeDensity, RoeEnthalpy, RoeSoundSpeed,
+  ProjVelocity, ProjVelocity_i, ProjVelocity_j, RoeSoundSpeed2, kappa;
+  unsigned short iVar, jVar, kVar, iDim;
+  
+public:
+  
+  /*!
+   * \brief Constructor of the class.
+   * \param[in] val_nDim - Number of dimensions of the problem.
+   * \param[in] val_nVar - Number of variables of the problem.
+   * \param[in] config - Definition of the particular problem.
+   */
+  CUpwRoe_Flow_Num(unsigned short val_nDim, unsigned short val_nVar, CConfig *config, bool val_low_dissipation);
+  
+  /*!
+   * \brief Destructor of the class.
+   */
+  ~CUpwRoe_Flow_Num(void);
+  
+  /*!
+   * \brief Compute the Roe's flux between two nodes i and j.
+   * \param[out] val_residual - Pointer to the total residual.
+   * \param[out] val_Jacobian_i - Jacobian of the numerical method at node i (implicit computation).
+   * \param[out] val_Jacobian_j - Jacobian of the numerical method at node j (implicit computation).
+   * \param[in] config - Definition of the particular problem.
+   */
+  void ComputeResidual(su2double *val_residual, su2double **val_Jacobian_i, su2double **val_Jacobian_j, CConfig *config);
+
+  /*!
+   * \brief Delegation of the computation of the Roe's flux between two nodes i and j.
+   * \param[out] val_residual - Pointer to the total residual.
+   * \param[in] V_i - Perturbed state at node i.
+   * \param[in] V_j - Perturbed state at node j.
+   * \param[in] config - Definition of the particular problem.
+   */
+  void ComputeResidualAuxiliar(su2double *val_residual, su2double *V_i, su2double *V_j, CConfig *config);
+};
 
 /*!
  * \class CUpwGeneralRoe_Flow
