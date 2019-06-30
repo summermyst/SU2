@@ -37,7 +37,8 @@
 
 #include "../include/numerics_structure.hpp"
 #include <limits>
-#define DEBUG2 true
+#include <iomanip> // for setprecision manipulator
+#define DEBUG2 false
 
 CCentJST_Flow::CCentJST_Flow(unsigned short val_nDim, unsigned short val_nVar, CConfig *config) : CNumerics(val_nDim, val_nVar, config) {
   
@@ -151,29 +152,21 @@ void CCentJST_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jac
 
   /* DEBUG: print values of the residual */
   #if DEBUG2
-  std::cout << "-------------------------------------------\nCentJST \n";
-
-  std::cout << "-------------------------------------------\nresidual = \n";
-  for (iVar = 0; iVar < nVar; iVar++)
-    std::cout << val_residual[iVar] << " ";
-  std::cout << "\n";
-
   /* print values of the jacobian */
-  std::cout << "-------------------------------------------\njacobian dR/dU_i = \n";
+  std::cerr << "-------------------------------------------\njacobian dR/dU_i = \n";
   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
     for (unsigned short jVar = 0; jVar < nVar; jVar++)
-      std::cout << val_Jacobian_i[iVar][jVar] << " ";
-    std::cout << "\n";
+      std::cerr << val_Jacobian_i[iVar][jVar] << " ";
+    std::cerr << "\n";
   }
-  std::cout << "-------------------------------------------\n";
 
-  std::cout << "-------------------------------------------\njacobian dR/dU_j = \n";
+  std::cerr << "-------------------------------------------\njacobian dR/dU_j = \n";
   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
     for (unsigned short jVar = 0; jVar < nVar; jVar++)
-      std::cout << val_Jacobian_j[iVar][jVar] << " ";
-    std::cout << "\n";
+      std::cerr << val_Jacobian_j[iVar][jVar] << " ";
+    std::cerr << "\n";
   }
-  std::cout << "-------------------------------------------\n";
+  std::cerr << "-------------------------------------------\n";
   #endif
 
   // ComputeResidualAuxiliar(val_residual, V_i, V_j, config);
@@ -588,29 +581,21 @@ void CCentLax_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jac
   
   /* DEBUG: print values of the residual */
   #if DEBUG2
-  std::cout << "-------------------------------------------\nCentLax \n";
-
-  std::cout << "-------------------------------------------\nresidual = \n";
-  for (iVar = 0; iVar < nVar; iVar++)
-    std::cout << val_residual[iVar] << " ";
-  std::cout << "\n";
-
   /* print values of the jacobian */
-  std::cout << "-------------------------------------------\njacobian dR/dU_i = \n";
+  std::cerr << "-------------------------------------------\njacobian dR/dU_i = \n";
   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
     for (unsigned short jVar = 0; jVar < nVar; jVar++)
-      std::cout << val_Jacobian_i[iVar][jVar] << " ";
-    std::cout << "\n";
+      std::cerr << val_Jacobian_i[iVar][jVar] << " ";
+    std::cerr << "\n";
   }
-  std::cout << "-------------------------------------------\n";
 
-  std::cout << "-------------------------------------------\njacobian dR/dU_j = \n";
+  std::cerr << "-------------------------------------------\njacobian dR/dU_j = \n";
   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
     for (unsigned short jVar = 0; jVar < nVar; jVar++)
-      std::cout << val_Jacobian_j[iVar][jVar] << " ";
-    std::cout << "\n";
+      std::cerr << val_Jacobian_j[iVar][jVar] << " ";
+    std::cerr << "\n";
   }
-  std::cout << "-------------------------------------------\n";
+  std::cerr << "-------------------------------------------\n";
   #endif
 
   // ComputeResidualAuxiliar(val_residual, V_i, V_j, config);
@@ -827,29 +812,21 @@ void CUpwCUSP_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jac
   
   /* DEBUG: print values of the residual */
   #if DEBUG2
-  std::cout << "-------------------------------------------\nUpwCUSP \n";
-
-  std::cout << "-------------------------------------------\nresidual = \n";
-  for (iVar = 0; iVar < nVar; iVar++)
-    std::cout << val_residual[iVar] << " ";
-  std::cout << "\n";
-
   /* print values of the jacobian */
-  std::cout << "-------------------------------------------\njacobian dR/dU_i = \n";
+  std::cerr << "-------------------------------------------\njacobian dR/dU_i = \n";
   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
     for (unsigned short jVar = 0; jVar < nVar; jVar++)
-      std::cout << val_Jacobian_i[iVar][jVar] << " ";
-    std::cout << "\n";
+      std::cerr << val_Jacobian_i[iVar][jVar] << " ";
+    std::cerr << "\n";
   }
-  std::cout << "-------------------------------------------\n";
 
-  std::cout << "-------------------------------------------\njacobian dR/dU_j = \n";
+  std::cerr << "-------------------------------------------\njacobian dR/dU_j = \n";
   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
     for (unsigned short jVar = 0; jVar < nVar; jVar++)
-      std::cout << val_Jacobian_j[iVar][jVar] << " ";
-    std::cout << "\n";
+      std::cerr << val_Jacobian_j[iVar][jVar] << " ";
+    std::cerr << "\n";
   }
-  std::cout << "-------------------------------------------\n";
+  std::cerr << "-------------------------------------------\n";
   #endif
 
   // ComputeResidualAuxiliar(val_residual, V_i, V_j, config);
@@ -1064,29 +1041,21 @@ void CUpwAUSM_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jac
   
   /* DEBUG: print values of the residual */
   #if DEBUG2
-  std::cout << "-------------------------------------------\nUpwAUSM \n";
-
-  std::cout << "-------------------------------------------\nresidual = \n";
-  for (iVar = 0; iVar < nVar; iVar++)
-    std::cout << val_residual[iVar] << " ";
-  std::cout << "\n";
-
   /* print values of the jacobian */
-  std::cout << "-------------------------------------------\njacobian dR/dU_i = \n";
+  std::cerr << "-------------------------------------------\njacobian dR/dU_i = \n";
   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
     for (unsigned short jVar = 0; jVar < nVar; jVar++)
-      std::cout << val_Jacobian_i[iVar][jVar] << " ";
-    std::cout << "\n";
+      std::cerr << val_Jacobian_i[iVar][jVar] << " ";
+    std::cerr << "\n";
   }
-  std::cout << "-------------------------------------------\n";
 
-  std::cout << "-------------------------------------------\njacobian dR/dU_j = \n";
+  std::cerr << "-------------------------------------------\njacobian dR/dU_j = \n";
   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
     for (unsigned short jVar = 0; jVar < nVar; jVar++)
-      std::cout << val_Jacobian_j[iVar][jVar] << " ";
-    std::cout << "\n";
+      std::cerr << val_Jacobian_j[iVar][jVar] << " ";
+    std::cerr << "\n";
   }
-  std::cout << "-------------------------------------------\n";
+  std::cerr << "-------------------------------------------\n";
   #endif
 
   // ComputeResidualAuxiliar(val_residual, V_i, V_j, config);
@@ -1701,29 +1670,21 @@ void CUpwSLAU_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jac
   
   /* DEBUG: print values of the residual */
   #if DEBUG2
-  std::cout << "-------------------------------------------\nUpwSLAU \n";
-
-  std::cout << "-------------------------------------------\nresidual = \n";
-  for (iVar = 0; iVar < nVar; iVar++)
-    std::cout << val_residual[iVar] << " ";
-  std::cout << "\n";
-
   /* print values of the jacobian */
-  std::cout << "-------------------------------------------\njacobian dR/dU_i = \n";
+  std::cerr << "-------------------------------------------\njacobian dR/dU_i = \n";
   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
     for (unsigned short jVar = 0; jVar < nVar; jVar++)
-      std::cout << val_Jacobian_i[iVar][jVar] << " ";
-    std::cout << "\n";
+      std::cerr << val_Jacobian_i[iVar][jVar] << " ";
+    std::cerr << "\n";
   }
-  std::cout << "-------------------------------------------\n";
 
-  std::cout << "-------------------------------------------\njacobian dR/dU_j = \n";
+  std::cerr << "-------------------------------------------\njacobian dR/dU_j = \n";
   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
     for (unsigned short jVar = 0; jVar < nVar; jVar++)
-      std::cout << val_Jacobian_j[iVar][jVar] << " ";
-    std::cout << "\n";
+      std::cerr << val_Jacobian_j[iVar][jVar] << " ";
+    std::cerr << "\n";
   }
-  std::cout << "-------------------------------------------\n";
+  std::cerr << "-------------------------------------------\n";
   #endif
 
   // ComputeResidualAuxiliar(val_residual, V_i, V_j, config);
@@ -1943,29 +1904,21 @@ void CUpwSLAU2_Flow::ComputeResidual(su2double *val_residual, su2double **val_Ja
   
   /* DEBUG: print values of the residual */
   #if DEBUG2
-  std::cout << "-------------------------------------------\nUpwSLAU2 \n";
-
-  std::cout << "-------------------------------------------\nresidual = \n";
-  for (iVar = 0; iVar < nVar; iVar++)
-    std::cout << val_residual[iVar] << " ";
-  std::cout << "\n";
-
   /* print values of the jacobian */
-  std::cout << "-------------------------------------------\njacobian dR/dU_i = \n";
+  std::cerr << "-------------------------------------------\njacobian dR/dU_i = \n";
   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
     for (unsigned short jVar = 0; jVar < nVar; jVar++)
-      std::cout << val_Jacobian_i[iVar][jVar] << " ";
-    std::cout << "\n";
+      std::cerr << val_Jacobian_i[iVar][jVar] << " ";
+    std::cerr << "\n";
   }
-  std::cout << "-------------------------------------------\n";
 
-  std::cout << "-------------------------------------------\njacobian dR/dU_j = \n";
+  std::cerr << "-------------------------------------------\njacobian dR/dU_j = \n";
   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
     for (unsigned short jVar = 0; jVar < nVar; jVar++)
-      std::cout << val_Jacobian_j[iVar][jVar] << " ";
-    std::cout << "\n";
+      std::cerr << val_Jacobian_j[iVar][jVar] << " ";
+    std::cerr << "\n";
   }
-  std::cout << "-------------------------------------------\n";
+  std::cerr << "-------------------------------------------\n";
   #endif
 
   // ComputeResidualAuxiliar(val_residual, V_i, V_j, config);
@@ -2397,29 +2350,21 @@ void CUpwHLLC_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jac
 
   /* DEBUG: print values of the residual */
   #if DEBUG2
-  std::cout << "-------------------------------------------\nUpwHLLC \n";
-
-  std::cout << "-------------------------------------------\nresidual = \n";
-  for (iVar = 0; iVar < nVar; iVar++)
-    std::cout << val_residual[iVar] << " ";
-  std::cout << "\n";
-
   /* print values of the jacobian */
-  std::cout << "-------------------------------------------\njacobian dR/dU_i = \n";
+  std::cerr << "-------------------------------------------\njacobian dR/dU_i = \n";
   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
     for (unsigned short jVar = 0; jVar < nVar; jVar++)
-      std::cout << val_Jacobian_i[iVar][jVar] << " ";
-    std::cout << "\n";
+      std::cerr << val_Jacobian_i[iVar][jVar] << " ";
+    std::cerr << "\n";
   }
-  std::cout << "-------------------------------------------\n";
 
-  std::cout << "-------------------------------------------\njacobian dR/dU_j = \n";
+  std::cerr << "-------------------------------------------\njacobian dR/dU_j = \n";
   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
     for (unsigned short jVar = 0; jVar < nVar; jVar++)
-      std::cout << val_Jacobian_j[iVar][jVar] << " ";
-    std::cout << "\n";
+      std::cerr << val_Jacobian_j[iVar][jVar] << " ";
+    std::cerr << "\n";
   }
-  std::cout << "-------------------------------------------\n";
+  std::cerr << "-------------------------------------------\n";
   #endif
 
   // ComputeResidualAuxiliar(val_residual, V_i, V_j, config);
@@ -3707,29 +3652,21 @@ void CUpwRoe_Flow::ComputeResidual(su2double *val_residual, su2double **val_Jaco
   
   /* DEBUG: print values of the residual */
   #if DEBUG2
-  std::cout << "-------------------------------------------\nUpwRoe \n";
-
-  std::cout << "-------------------------------------------\nresidual = \n";
-  for (iVar = 0; iVar < nVar; iVar++)
-    std::cout << val_residual[iVar] << " ";
-  std::cout << "\n";
-
   /* print values of the jacobian */
-  std::cout << "-------------------------------------------\njacobian dR/dU_i = \n";
+  std::cerr << "-------------------------------------------\njacobian dR/dU_i = \n";
   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
     for (unsigned short jVar = 0; jVar < nVar; jVar++)
-      std::cout << val_Jacobian_i[iVar][jVar] << " ";
-    std::cout << "\n";
+      std::cerr << val_Jacobian_i[iVar][jVar] << " ";
+    std::cerr << "\n";
   }
-  std::cout << "-------------------------------------------\n";
 
-  std::cout << "-------------------------------------------\njacobian dR/dU_j = \n";
+  std::cerr << "-------------------------------------------\njacobian dR/dU_j = \n";
   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
     for (unsigned short jVar = 0; jVar < nVar; jVar++)
-      std::cout << val_Jacobian_j[iVar][jVar] << " ";
-    std::cout << "\n";
+      std::cerr << val_Jacobian_j[iVar][jVar] << " ";
+    std::cerr << "\n";
   }
-  std::cout << "-------------------------------------------\n";
+  std::cerr << "-------------------------------------------\n";
   #endif
 }
 
@@ -3827,29 +3764,21 @@ void CUpwRoe_Flow_Num::ComputeResidual(su2double *val_residual, su2double **val_
   
   /* DEBUG: print values of the residual */
   #if DEBUG2
-  std::cout << "-------------------------------------------\nUpwRoe \n";
-
-  std::cout << "-------------------------------------------\nresidual = \n";
-  for (iVar = 0; iVar < nVar; iVar++)
-    std::cout << val_residual[iVar] << " ";
-  std::cout << "\n";
-
   /* print values of the jacobian */
-  std::cout << "-------------------------------------------\njacobian dR/dU_i = \n";
+  std::cerr << "-------------------------------------------\njacobian dR/dU_i = \n";
   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
     for (unsigned short jVar = 0; jVar < nVar; jVar++)
-      std::cout << val_Jacobian_i[iVar][jVar] << " ";
-    std::cout << "\n";
+      std::cerr << val_Jacobian_i[iVar][jVar] << " ";
+    std::cerr << "\n";
   }
-  std::cout << "-------------------------------------------\n";
 
-  std::cout << "-------------------------------------------\njacobian dR/dU_j = \n";
+  std::cerr << "-------------------------------------------\njacobian dR/dU_j = \n";
   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
     for (unsigned short jVar = 0; jVar < nVar; jVar++)
-      std::cout << val_Jacobian_j[iVar][jVar] << " ";
-    std::cout << "\n";
+      std::cerr << val_Jacobian_j[iVar][jVar] << " ";
+    std::cerr << "\n";
   }
-  std::cout << "-------------------------------------------\n";
+  std::cerr << "-------------------------------------------\n";
   #endif
 }
 

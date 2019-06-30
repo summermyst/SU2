@@ -37,7 +37,7 @@
 
 #include "../include/solver_structure.hpp"
 #include "../../Common/include/toolboxes/printing_toolbox.hpp"
-#define DEBUG3 true
+#define DEBUG3 false
 
 CEulerSolver::CEulerSolver(void) : CSolver() {
   
@@ -4596,21 +4596,21 @@ void CEulerSolver::Centered_Residual(CGeometry *geometry, CSolver **solver_conta
     #if DEBUG3
       if (iEdge == 1) {
         /* print values of the jacobian */
-        std::cout << "jacobian dR/dU_i = \n";
+        std::cerr << "jacobian dR/dU_i = \n";
         for (unsigned short iVar = 0; iVar < nVar; iVar++) {
           for (unsigned short jVar = 0; jVar < nVar; jVar++)
-            std::cout << Jacobian_i[iVar][jVar] << " ";
-          std::cout << "\n";
+            std::cerr << Jacobian_i[iVar][jVar] << " ";
+          std::cerr << "\n";
         }
-        std::cout << "-------------------------------------------\n";
+        std::cerr << "-------------------------------------------\n";
 
-        std::cout << "jacobian dR/dU_j = \n";
+        std::cerr << "jacobian dR/dU_j = \n";
         for (unsigned short iVar = 0; iVar < nVar; iVar++) {
           for (unsigned short jVar = 0; jVar < nVar; jVar++)
-            std::cout << Jacobian_j[iVar][jVar] << " ";
-          std::cout << "\n";
+            std::cerr << Jacobian_j[iVar][jVar] << " ";
+          std::cerr << "\n";
         }
-        std::cout << "===========================================\n";
+        std::cerr << "===========================================\n";
       }
     #endif
 
@@ -4842,21 +4842,21 @@ void CEulerSolver::Upwind_Residual(CGeometry *geometry, CSolver **solver_contain
     #if DEBUG3
       if (iEdge == 1) {
         /* print values of the jacobian */
-        std::cout << "jacobian dR/dU_i = \n";
+        std::cerr << "jacobian dR/dU_i = \n";
         for (unsigned short iVar = 0; iVar < nVar; iVar++) {
           for (unsigned short jVar = 0; jVar < nVar; jVar++)
-            std::cout << Jacobian_i[iVar][jVar] << " ";
-          std::cout << "\n";
+            std::cerr << Jacobian_i[iVar][jVar] << " ";
+          std::cerr << "\n";
         }
-        std::cout << "-------------------------------------------\n";
+        std::cerr << "-------------------------------------------\n";
 
-        std::cout << "jacobian dR/dU_j = \n";
+        std::cerr << "jacobian dR/dU_j = \n";
         for (unsigned short iVar = 0; iVar < nVar; iVar++) {
           for (unsigned short jVar = 0; jVar < nVar; jVar++)
-            std::cout << Jacobian_j[iVar][jVar] << " ";
-          std::cout << "\n";
+            std::cerr << Jacobian_j[iVar][jVar] << " ";
+          std::cerr << "\n";
         }
-        std::cout << "===========================================\n";
+        std::cerr << "===========================================\n";
       }
     #endif
 
