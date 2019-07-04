@@ -6331,6 +6331,12 @@ void CEulerSolver::ImplicitEuler_Iteration(CGeometry *geometry, CSolver **solver
   bool roe_turkel = config->GetKind_Upwind_Flow() == TURKEL;
   bool low_mach_prec = config->Low_Mach_Preconditioning();
   
+  /*--- Store information about old Res_RMS for backtracking assertion ---*/
+  su2double Residual_RMS_old[nVar];
+  for (iVar = 0; iVar < nVar; iVar++) {
+    Residual_RMS_old[iVar] = GetRes_RMS(iVar);
+  }
+
   /*--- Set maximum residual to zero ---*/
   
   for (iVar = 0; iVar < nVar; iVar++) {
@@ -6408,9 +6414,13 @@ void CEulerSolver::ImplicitEuler_Iteration(CGeometry *geometry, CSolver **solver
   /*--- Update solution (system written in terms of increments) ---*/
   
   if (!adjoint) {
+    std::cout << "Relaxation factor = " << config->GetRelaxation_Factor_Flow() << std::endl;
     for (iPoint = 0; iPoint < nPointDomain; iPoint++) {
       for (iVar = 0; iVar < nVar; iVar++) {
         node[iPoint]->AddSolution(iVar, config->GetRelaxation_Factor_Flow()*LinSysSol[iPoint*nVar+iVar]);
+        // unsigned short set_iteration_step = 100;
+        // su2double backtracking_factor = floor(config->GetExtIter()/set_iteration_step);
+        // node[iPoint]->AddSolution(iVar, LinSysSol[iPoint*nVar+iVar]/std::pow(2,backtracking_factor));
       }
     }
   }
@@ -6422,6 +6432,15 @@ void CEulerSolver::ImplicitEuler_Iteration(CGeometry *geometry, CSolver **solver
   /*--- Compute the root mean square residual ---*/
   
   SetResidual_RMS(geometry, config);
+
+  /*--- Check whether residual is increasing, if so then apply backtracking by some coefficient ---*/
+  bool increasing_residual = false;
+  for (iVar = 0; iVar < nVar; iVar++) {
+    if (Residual_RMS_old[iVar] < Residual_RMS[iVar])
+      increasing_residual = true;
+  }
+  if (increasing_residual && config->GetNumJacConvective() && config->GetExtIter()>10)
+    config->SetRelaxation_Factor_Flow(static_cast<su2double>(config->GetRelaxation_Factor_Flow())/config->GetBacktracking_Coefficient());
   
 }
 

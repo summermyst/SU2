@@ -77,6 +77,7 @@ private:
   bool Num_Jac_Source;     /*!< \brief Numerical jacobian, source terms. */
   su2double Perturbation;  /*!< \brief Perturbation used in the computation of the numerical jacobian. */
   su2double *User_Pert;    /*!< \brief User defined minimum perturbation for the numerical jacobian. */
+  su2double Backtracking_Coefficient; /*!< \brief User defined backtracking coefficient for newton iteration. */
 
   SU2_MPI::Comm SU2_Communicator; /*!< \brief MPI communicator of SU2.*/
   int rank, size;
@@ -4058,6 +4059,17 @@ public:
    * \return Restart frequency of the linear solver for the implicit formulation.
    */
   unsigned long GetLinear_Solver_Restart_Frequency(void);
+  
+  /*!
+   * \brief Get the coefficient coefficient for the newton iteration for the implicit formulation.
+   * \return backtracking coefficient of the newton iteration for the implicit formulation.
+   */
+  su2double GetBacktracking_Coefficient(void);
+  
+  /*!
+   * \brief Set the relaxation coefficient of the linear solver for the implicit formulation.
+   */
+  void SetRelaxation_Factor_Flow(su2double val_factor);
   
   /*!
    * \brief Get the relaxation coefficient of the linear solver for the implicit formulation.
