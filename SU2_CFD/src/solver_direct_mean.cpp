@@ -6342,7 +6342,7 @@ void CEulerSolver::ImplicitEuler_Iteration(CGeometry *geometry, CSolver **solver
   
   /*--- Store information about old Res_RMS for backtracking assertion ---*/
   if (config->GetExtIter() == 0) {
-    User_Relaxation_Factor_Flow = config->GetRelaxation_Factor_Flow();
+    // User_Relaxation_Factor_Flow = config->GetRelaxation_Factor_Flow();
     for (iVar = 0; iVar < nVar; iVar++) {
       if (GetRes_RMS(iVar) > Residual_RMS_first[iVar])
         Residual_RMS_first[iVar] = GetRes_RMS(iVar);
@@ -6452,10 +6452,8 @@ void CEulerSolver::ImplicitEuler_Iteration(CGeometry *geometry, CSolver **solver
   unsigned short ExtIter_threshold = 1;
   bool is_increasing = false;
   bool first_iter_MG = false;
-  if (config->GetExtIter() > 1 && current_iter != config->GetExtIter())
+  if (config->GetExtIter() > 1)// && current_iter != config->GetExtIter())
   {
-    current_iter = config->GetExtIter();
-    first_iter_MG = true;
     for (iVar = 0; iVar < nVar; iVar++)
     {
       bool cond1 = (Residual_RMS_first[iVar] < Residual_RMS_last[iVar] && GetRes_RMS(iVar) > (2*Residual_RMS_last[iVar] - Residual_RMS_first[iVar]) );
@@ -6469,11 +6467,14 @@ void CEulerSolver::ImplicitEuler_Iteration(CGeometry *geometry, CSolver **solver
     }
   }
 
-  if (is_increasing && first_iter_MG && config->GetNumJacConvective() && config->GetExtIter()>ExtIter_threshold)
+  if (is_increasing && config->GetNumJacConvective() && config->GetExtIter()>ExtIter_threshold)
     config->SetRelaxation_Factor_Flow(static_cast<su2double>(config->GetRelaxation_Factor_Flow())/config->GetBacktracking_Coefficient());
   
-  if (!is_increasing && first_iter_MG && config->GetRelaxation_Factor_Flow() != User_Relaxation_Factor_Flow && config->GetNumJacConvective() && config->GetExtIter()>ExtIter_threshold)
-    config->SetRelaxation_Factor_Flow(static_cast<su2double>(config->GetRelaxation_Factor_Flow())*config->GetBacktracking_Coefficient());
+  // if (!is_increasing && current_iter != config->GetExtIter() && config->GetRelaxation_Factor_Flow() != User_Relaxation_Factor_Flow && config->GetNumJacConvective() && config->GetExtIter()>ExtIter_threshold)
+  // {
+  //   current_iter = config->GetExtIter();
+  //   config->SetRelaxation_Factor_Flow(static_cast<su2double>(config->GetRelaxation_Factor_Flow())*config->GetBacktracking_Coefficient());
+  // }
 }
 
 void CEulerSolver::SetPrimitive_Gradient_GG(CGeometry *geometry, CConfig *config) {
