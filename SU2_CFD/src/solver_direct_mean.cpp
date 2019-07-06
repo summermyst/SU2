@@ -42,6 +42,9 @@
 CEulerSolver::CEulerSolver(void) : CSolver() {
   
   /*--- Basic array initialization ---*/
+  Residual_RMS_first = NULL;
+  Residual_RMS_last = NULL;
+  current_iter = 1;
   
   CD_Inv = NULL; CL_Inv = NULL; CSF_Inv = NULL;  CEff_Inv = NULL;
   CMx_Inv = NULL; CMy_Inv = NULL; CMz_Inv = NULL;
@@ -229,7 +232,10 @@ CEulerSolver::CEulerSolver(CGeometry *geometry, CConfig *config, unsigned short 
   /*--- Array initialization ---*/
 
   /*--- Basic array initialization ---*/
-
+  Residual_RMS_first = NULL;
+  Residual_RMS_last = NULL;
+  current_iter = 1;
+  
   CD_Inv = NULL; CL_Inv = NULL; CSF_Inv = NULL;  CEff_Inv = NULL;
   CMx_Inv = NULL; CMy_Inv = NULL; CMz_Inv = NULL;
   CFx_Inv = NULL; CFy_Inv = NULL; CFz_Inv = NULL;
@@ -388,15 +394,16 @@ CEulerSolver::CEulerSolver(CGeometry *geometry, CConfig *config, unsigned short 
   node = new CVariable*[nPoint];
   
   /*--- Define some auxiliary vectors related to the residual ---*/
-  
-  Residual      = new su2double[nVar];         for (iVar = 0; iVar < nVar; iVar++) Residual[iVar]      = 0.0;
-  Residual_RMS  = new su2double[nVar];         for (iVar = 0; iVar < nVar; iVar++) Residual_RMS[iVar]  = 0.0;
-  Residual_Max  = new su2double[nVar];         for (iVar = 0; iVar < nVar; iVar++) Residual_Max[iVar]  = 0.0;
-  Residual_i    = new su2double[nVar];         for (iVar = 0; iVar < nVar; iVar++) Residual_i[iVar]    = 0.0;
-  Residual_j    = new su2double[nVar];         for (iVar = 0; iVar < nVar; iVar++) Residual_j[iVar]    = 0.0;
-  Res_Conv      = new su2double[nVar];         for (iVar = 0; iVar < nVar; iVar++) Res_Conv[iVar]      = 0.0;
-  Res_Visc      = new su2double[nVar];         for (iVar = 0; iVar < nVar; iVar++) Res_Visc[iVar]      = 0.0;
-  Res_Sour      = new su2double[nVar];         for (iVar = 0; iVar < nVar; iVar++) Res_Sour[iVar]      = 0.0;
+  Residual_RMS_first = new su2double[nVar];         for (iVar = 0; iVar < nVar; iVar++) Residual_RMS_first[iVar] = 0.0;
+  Residual_RMS_last  = new su2double[nVar];         for (iVar = 0; iVar < nVar; iVar++) Residual_RMS_last[iVar]  = 0.0;
+  Residual           = new su2double[nVar];         for (iVar = 0; iVar < nVar; iVar++) Residual[iVar]           = 0.0;
+  Residual_RMS       = new su2double[nVar];         for (iVar = 0; iVar < nVar; iVar++) Residual_RMS[iVar]       = 0.0;
+  Residual_Max       = new su2double[nVar];         for (iVar = 0; iVar < nVar; iVar++) Residual_Max[iVar]       = 0.0;
+  Residual_i         = new su2double[nVar];         for (iVar = 0; iVar < nVar; iVar++) Residual_i[iVar]         = 0.0;
+  Residual_j         = new su2double[nVar];         for (iVar = 0; iVar < nVar; iVar++) Residual_j[iVar]         = 0.0;
+  Res_Conv           = new su2double[nVar];         for (iVar = 0; iVar < nVar; iVar++) Res_Conv[iVar]           = 0.0;
+  Res_Visc           = new su2double[nVar];         for (iVar = 0; iVar < nVar; iVar++) Res_Visc[iVar]           = 0.0;
+  Res_Sour           = new su2double[nVar];         for (iVar = 0; iVar < nVar; iVar++) Res_Sour[iVar]           = 0.0;
   
   /*--- Define some structures for locating max residuals ---*/
   
@@ -878,6 +885,8 @@ CEulerSolver::~CEulerSolver(void) {
 
   /*--- Array deallocation ---*/
 
+  if (Residual_RMS_first != NULL) delete [] Residual_RMS_first;
+  if (Residual_RMS_last != NULL) delete [] Residual_RMS_last;
   if (CD_Inv != NULL)         delete [] CD_Inv;
   if (CL_Inv != NULL)         delete [] CL_Inv;
   if (CSF_Inv != NULL)    delete [] CSF_Inv;
@@ -6332,10 +6341,18 @@ void CEulerSolver::ImplicitEuler_Iteration(CGeometry *geometry, CSolver **solver
   bool low_mach_prec = config->Low_Mach_Preconditioning();
   
   /*--- Store information about old Res_RMS for backtracking assertion ---*/
-  su2double Residual_RMS_old[nVar];
-  for (iVar = 0; iVar < nVar; iVar++) {
-    Residual_RMS_old[iVar] = GetRes_RMS(iVar);
+  if (config->GetExtIter() == 0) {
+    User_Relaxation_Factor_Flow = config->GetRelaxation_Factor_Flow();
+    for (iVar = 0; iVar < nVar; iVar++) {
+      if (GetRes_RMS(iVar) > Residual_RMS_first[iVar])
+        Residual_RMS_first[iVar] = GetRes_RMS(iVar);
+    }
   }
+  if (config->GetExtIter() == 1)
+    for (iVar = 0; iVar < nVar; iVar++) {
+      if (GetRes_RMS(iVar) > Residual_RMS_last[iVar])
+        Residual_RMS_last[iVar] = GetRes_RMS(iVar);
+    }
 
   /*--- Set maximum residual to zero ---*/
   
@@ -6414,15 +6431,13 @@ void CEulerSolver::ImplicitEuler_Iteration(CGeometry *geometry, CSolver **solver
   /*--- Update solution (system written in terms of increments) ---*/
   
   if (!adjoint) {
-    std::cout << "Relaxation factor = " << config->GetRelaxation_Factor_Flow() << std::endl;
     for (iPoint = 0; iPoint < nPointDomain; iPoint++) {
       for (iVar = 0; iVar < nVar; iVar++) {
         node[iPoint]->AddSolution(iVar, config->GetRelaxation_Factor_Flow()*LinSysSol[iPoint*nVar+iVar]);
-        // unsigned short set_iteration_step = 100;
-        // su2double backtracking_factor = floor(config->GetExtIter()/set_iteration_step);
-        // node[iPoint]->AddSolution(iVar, LinSysSol[iPoint*nVar+iVar]/std::pow(2,backtracking_factor));
       }
     }
+    if (config->GetNumJacConvective())
+      std::cout << "Relaxation factor = " << config->GetRelaxation_Factor_Flow() << std::endl;
   }
   
   /*--- MPI solution ---*/
@@ -6434,14 +6449,31 @@ void CEulerSolver::ImplicitEuler_Iteration(CGeometry *geometry, CSolver **solver
   SetResidual_RMS(geometry, config);
 
   /*--- Check whether residual is increasing, if so then apply backtracking by some coefficient ---*/
-  bool increasing_residual = false;
-  for (iVar = 0; iVar < nVar; iVar++) {
-    if (Residual_RMS_old[iVar] < Residual_RMS[iVar])
-      increasing_residual = true;
+  unsigned short ExtIter_threshold = 1;
+  bool is_increasing = false;
+  bool first_iter_MG = false;
+  if (config->GetExtIter() > 1 && current_iter != config->GetExtIter())
+  {
+    current_iter = config->GetExtIter();
+    first_iter_MG = true;
+    for (iVar = 0; iVar < nVar; iVar++)
+    {
+      bool cond1 = (Residual_RMS_first[iVar] < Residual_RMS_last[iVar] && GetRes_RMS(iVar) > (2*Residual_RMS_last[iVar] - Residual_RMS_first[iVar]) );
+      bool cond2 = (Residual_RMS_first[iVar] >= Residual_RMS_last[iVar] && GetRes_RMS(iVar) > Residual_RMS_first[iVar]);
+      if (cond1 || cond2)
+      {
+        is_increasing = true;
+        Residual_RMS_first[iVar] = Residual_RMS_last[iVar];
+        Residual_RMS_last[iVar] = GetRes_RMS(iVar);
+      }
+    }
   }
-  if (increasing_residual && config->GetNumJacConvective() && config->GetExtIter()>10)
+
+  if (is_increasing && first_iter_MG && config->GetNumJacConvective() && config->GetExtIter()>ExtIter_threshold)
     config->SetRelaxation_Factor_Flow(static_cast<su2double>(config->GetRelaxation_Factor_Flow())/config->GetBacktracking_Coefficient());
   
+  if (!is_increasing && first_iter_MG && config->GetRelaxation_Factor_Flow() != User_Relaxation_Factor_Flow && config->GetNumJacConvective() && config->GetExtIter()>ExtIter_threshold)
+    config->SetRelaxation_Factor_Flow(static_cast<su2double>(config->GetRelaxation_Factor_Flow())*config->GetBacktracking_Coefficient());
 }
 
 void CEulerSolver::SetPrimitive_Gradient_GG(CGeometry *geometry, CConfig *config) {

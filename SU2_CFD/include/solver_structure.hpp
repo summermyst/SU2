@@ -4507,7 +4507,11 @@ public:
  */
 class CEulerSolver : public CSolver {
 protected:
-  
+  su2double *Residual_RMS_first;
+  su2double *Residual_RMS_last;
+  su2double User_Relaxation_Factor_Flow;
+  unsigned long current_iter;
+
   su2double
   Mach_Inf,  /*!< \brief Mach number at the infinity. */
   Density_Inf,  /*!< \brief Density at the infinity. */
